@@ -284,7 +284,7 @@ export async function analyzeAudioBuffer(
   };
 }
 
-function normalizeAmplitude(rawValue, referenceValue = 1) {
+export function normalizeAmplitude(rawValue, referenceValue = 1) {
   const gain = clamp(Number(state.inputGain) || 1, 0.25, 4);
   const floor = clamp((Number(state.noiseFloor) || 0) / 100, 0, 0.3);
   const dynamicRange = clamp(Number(state.dynamicRange) || 60, 24, 96);
@@ -303,6 +303,7 @@ export function sampleAnalysisAtTime(seconds) {
     state.lowFreqMagnitude = 0;
     state.spectralEnergy = 0;
     state.attractorEnergy = 0;
+    state.analysisFrameIndex = 0;
     return;
   }
 
@@ -311,6 +312,7 @@ export function sampleAnalysisAtTime(seconds) {
     0,
     analysis.frameCount - 1
   );
+  state.analysisFrameIndex = frameIndex;
 
   let reference = 1;
   if (state.amplitudeMode === "track") {

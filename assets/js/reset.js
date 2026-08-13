@@ -6,7 +6,6 @@ import { elements, state } from "./core.js";
 import { setControlValue, syncColormapButtons } from "./controls.js";
 import {
   setLoopStatus,
-  setFullTrackLoop,
   updateLoopSelectionUi
 } from "./loop.js";
 import { applyVolume, updateLoopButtonState } from "./playback.js";
@@ -77,13 +76,21 @@ function resetLoopSection() {
   elements.loopSnap.checked = loopDefaults.snap;
 
   if (state.loopReady) {
-    setFullTrackLoop();
+    const duration = state.decodedAudioBuffer?.duration || 0;
+    state.loopStart = Math.max(0, Math.min(duration, loopDefaults.start));
+    state.loopEnd = Math.max(
+      state.loopStart,
+      Math.min(
+        duration,
+        loopDefaults.end > state.loopStart ? loopDefaults.end : duration
+      )
+    );
   } else {
-    state.loopStart = 0;
-    state.loopEnd = 0;
-    updateLoopSelectionUi();
+    state.loopStart = loopDefaults.start;
+    state.loopEnd = loopDefaults.end;
   }
-  setLoopStatus("Loop reset to the complete track.", "idle");
+  updateLoopSelectionUi();
+  setLoopStatus("Loop reset to default settings.", "idle");
 }
 
 export function resetSection(section, { record = true } = {}) {

@@ -2,6 +2,7 @@
  * loader.js — audio file loading, decoding and offline analysis.
  */
 import { analyzeAudioBuffer, computeWaveformPeaks } from "./analysis.js";
+import { loopDefaults } from "./config.js";
 import { audio, elements, state } from "./core.js";
 import { applyVolume, pausePlayback, setPlayButtonState } from "./playback.js";
 import { resetSimulation } from "./render.js";
@@ -242,8 +243,12 @@ export async function loadAudioFile(file, onReady = () => {}) {
     setFileStatus("Building analysis data…", "active");
     state.hasAudio = true;
     state.loopWaveformPeaks = computeWaveformPeaks(decoded);
-    state.loopStart = 0;
-    state.loopEnd = decoded.duration;
+    state.loopStart = clamp(loopDefaults.start, 0, decoded.duration);
+    state.loopEnd = clamp(
+      loopDefaults.end > state.loopStart ? loopDefaults.end : decoded.duration,
+      state.loopStart,
+      decoded.duration
+    );
     state.loopReady = true;
 
     elements.audioName.textContent = file.name;

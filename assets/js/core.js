@@ -25,6 +25,7 @@ export const state = {
   spectralEnergy: 0,
   attractorEnergy: 0,
   adaptiveReference: 0,
+  analysisFrameIndex: 0,
 
   // Simulation clock
   time: 0,

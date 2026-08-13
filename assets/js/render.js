@@ -8,6 +8,7 @@
  * identical at 24, 30 or 60 fps export.
  */
 import { COLORMAPS, engine } from "./config.js";
+import { normalizeAmplitude } from "./analysis.js";
 import { state } from "./core.js";
 import {
   copyParticleWithJitter,
@@ -677,19 +678,32 @@ function updateParticleGeometry() {
   particleGeometry.setDrawRange(0, activeCount);
 }
 
+/** Resolve the amplitude normalization reference for one historical frame. */
+function getWaterfallReference(analysis, frameIndex) {
+  if (state.amplitudeMode === "track") {
+    return analysis.trackPeak || 1;
+  }
+  if (state.amplitudeMode === "adaptive") {
+    return analysis.adaptivePeak?.[frameIndex] || analysis.trackPeak || 1;
+  }
+  return 1;
+}
+
 /**
- * Build the visible Concentric Sphere from dense, complete great-circle rings.
- * Every circle has the same center and base radius; distributing their planes
- * through 180° forms a closed spherical shell instead of separated latitude
- * slices with empty bands between them.
+ * Build the visible latitude-ring sphere and map audio history onto it as a
+ * waterfall. The newest analysis frame enters the north/top ring. Each ring
+ * below it reads exactly one earlier analysis frame, so transients travel down
+ * the sphere one ring at a time while the latitude geometry itself stays fixed.
+ * Reading history directly from the precomputed timeline keeps preview,
+ * seeking, looping and deterministic video export identical.
  */
 function updateConcentricSphereGeometry() {
   sphereRingSystem.visible = true;
   particleSystem.visible = false;
 
   const visibleRingCount = configureSphereRingLayout(
-    state.ringCount || 100,
-    state.ringLineWidth || 1
+    state.ringCount || 123,
+    state.ringLineWidth || 0.25
   );
   const reactivity = state.reactivity / 100;
   const audioMagnitude = clamp(state.lowFreqMagnitude * reactivity, 0, 1);
@@ -700,10 +714,8 @@ function updateConcentricSphereGeometry() {
   const visualizationScale =
     getEffectiveVisualizationScale() * state.sphereRadius * spherePulse;
 
-  // The geometry is a unit sphere. One uniform scale preserves an exact sphere
-  // while the whole shell breathes with bass/beat energy. Individual frequency
-  // regions remain audio-reactive through color/brightness instead of breaking
-  // neighboring rings apart geometrically.
+  // The geometry is a unit sphere. Audio history changes only ring light/color,
+  // so the stacked latitude shell never opens gaps while the waterfall moves.
   sphereRingSystem.scale.setScalar(visualizationScale);
   sphereRingSystem.rotation.x = 0.42;
   sphereRingSystem.rotation.y =
@@ -716,25 +728,41 @@ function updateConcentricSphereGeometry() {
   const stopsB = COLORMAPS[state.cmapB].stops;
   const colorMix = clamp(state.cmapMix, 0, 1);
   const baseBrightness = state.brightness / 100;
-  const bandCount = Math.max(1, state.magnitudes.length);
   const instanceColors = sphereRingSystem.instanceColor.array;
+  const analysis = state.analysisReady ? state.analysis : null;
+  const currentFrame = analysis
+    ? clamp(
+        Number(state.analysisFrameIndex) || 0,
+        0,
+        Math.max(0, analysis.frameCount - 1)
+      )
+    : -1;
 
   for (let ringIndex = 0; ringIndex < visibleRingCount; ringIndex += 1) {
     const ringT = ringIndex / Math.max(1, visibleRingCount - 1);
     const colorA = sampleColormap(stopsA, ringT);
     const colorB = sampleColormap(stopsB, ringT);
 
-    // Spread the available spectrum continuously around the sphere rather than
-    // repeating a small band array in visible stripes.
-    const bandPosition = ringT * Math.max(0, bandCount - 1);
-    const bandA = Math.floor(bandPosition);
-    const bandB = Math.min(bandCount - 1, bandA + 1);
-    const bandMix = bandPosition - bandA;
-    const magnitudeA = Number(state.magnitudes[bandA]) || 0;
-    const magnitudeB = Number(state.magnitudes[bandB]) || 0;
-    const bandMagnitude = magnitudeA + (magnitudeB - magnitudeA) * bandMix;
-    const reactiveBrightness =
-      baseBrightness * (0.45 + audioMagnitude * 0.35 + bandMagnitude * reactivity * 0.7);
+    // scene.js indexes latitude rings south-to-north. Reverse the history
+    // offset so the current frame appears at the north/top ring and older
+    // frames descend toward the south/bottom ring like a waterfall display.
+    const historyOffset = visibleRingCount - 1 - ringIndex;
+    const historyFrame = currentFrame - historyOffset;
+    let waterfallMagnitude = 0;
+
+    if (analysis && historyFrame >= 0 && historyFrame < analysis.frameCount) {
+      const reference = getWaterfallReference(analysis, historyFrame);
+      waterfallMagnitude = normalizeAmplitude(
+        analysis.overall?.[historyFrame] || 0,
+        reference
+      );
+    }
+
+    // Keep a faint structural baseline so the complete sphere remains visible;
+    // audio energy rides over that baseline as the time-history cascade.
+    const reactiveBrightness = baseBrightness * (
+      0.14 + waterfallMagnitude * reactivity * 1.2
+    );
 
     const offset = ringIndex * 3;
     instanceColors[offset] =

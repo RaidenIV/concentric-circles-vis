@@ -25,8 +25,8 @@ export const defaults = Object.freeze({
   cameraSpeed: 1.0,
   cameraAmount: 100,
   cameraDistance: 50,
-  cameraElevation: 0,
-  cameraAzimuth: 0,
+  cameraElevation: 49,
+  cameraAzimuth: 100,
 
   // HUD
   hudEnabled: true,
@@ -39,11 +39,11 @@ export const defaults = Object.freeze({
 
   // Concentric sphere
   reactivity: 100,
-  ringCount: 100,
+  ringCount: 123,
   sphereRadius: 1.0,
-  sphereSize: 100,
-  ringOpacity: 80,
-  ringLineWidth: 1.0,
+  sphereSize: 70,
+  ringOpacity: 14,
+  ringLineWidth: 0.25,
   rotationSpeed: 1.0,
   rotationAmount: 100,
 
@@ -81,7 +81,7 @@ export const defaults = Object.freeze({
   bloomBase: 0.6,
   bloomGain: 3.2,
   bloomRadius: 0.45,
-  bloomThreshold: 0.45,
+  bloomThreshold: 0.9,
 
   // Color
   lockedCmapIndex: -1,
@@ -126,15 +126,15 @@ export const loopDefaults = Object.freeze({
   bars: 4,
   snap: true,
   start: 0,
-  end: 0
+  end: 73.84614512471656
 });
 
 export const isFirefoxBrowser = /Firefox\//i.test(navigator.userAgent);
 
 export const videoExportDefaults = Object.freeze({
-  // Firefox's H.264 WebCodecs output can omit the decoder metadata that MP4
-  // muxing requires, so default Firefox to the MKV/VP9 path instead.
-  fileType: isFirefoxBrowser ? "mkv" : "mp4",
+  // c1.json is the startup/reset baseline, including MP4 as the selected format.
+  // Firefox still surfaces its existing compatibility warning at export time.
+  fileType: "mp4",
   resolution: "4k",
   frameRate: 60,
   bitrateMbps: 24
