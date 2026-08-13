@@ -690,10 +690,12 @@ function getWaterfallReference(analysis, frameIndex) {
   return 1;
 }
 
-// Reused for per-ring waterfall deformation. The torus geometry is a unit
-// circle in the XY plane, so changing only X/Y scale expands the ring radius
-// without moving its latitude or changing the cascade timing.
+// Reused for per-ring waterfall deformation. Each latitude ring is expanded
+// radially from the sphere center so its latitude angle stays constant instead
+// of widening only in X/Y and turning the shell into an ovoid.
 const WATERFALL_RING_MATRIX = new THREE.Matrix4();
+const WATERFALL_MAGNITUDES = new Float32Array(SPHERE_RING_COUNT);
+const WATERFALL_SHAPE_MAGNITUDES = new Float32Array(SPHERE_RING_COUNT);
 
 /**
  * Build the visible latitude-ring sphere and map audio history onto it as a
@@ -745,11 +747,10 @@ function updateConcentricSphereGeometry() {
       )
     : -1;
 
+  // Resolve the exact waterfall magnitude for every latitude first. Colour
+  // continues to use these unsmoothed values so each ring still represents one
+  // precise historical analysis frame.
   for (let ringIndex = 0; ringIndex < visibleRingCount; ringIndex += 1) {
-    const ringT = ringIndex / Math.max(1, visibleRingCount - 1);
-    const colorA = sampleColormap(stopsA, ringT);
-    const colorB = sampleColormap(stopsB, ringT);
-
     // scene.js indexes latitude rings south-to-north. Reverse the history
     // offset so the current frame appears at the north/top ring and older
     // frames descend toward the south/bottom ring like a waterfall display.
@@ -765,19 +766,51 @@ function updateConcentricSphereGeometry() {
       );
     }
 
-    // Magnitude now travels through the geometry as well as the colour. Keep
-    // the ring at its fixed latitude and expand only its circular radius, so a
-    // loud analysis frame visibly swells each successive ring as it cascades
-    // from north/top to south/bottom.
+    WATERFALL_MAGNITUDES[ringIndex] = waterfallMagnitude;
+  }
+
+  // Geometry gets a short symmetric spatial blend across neighbouring rings.
+  // This does not change cascade timing or per-ring audio data; it only removes
+  // abrupt radial steps that can visually detach the leading edge from the
+  // untouched shell when a transient enters the waterfall.
+  for (let ringIndex = 0; ringIndex < visibleRingCount; ringIndex += 1) {
+    const sample = (offset) => {
+      const index = clamp(ringIndex + offset, 0, visibleRingCount - 1);
+      return WATERFALL_MAGNITUDES[index];
+    };
+    WATERFALL_SHAPE_MAGNITUDES[ringIndex] =
+      sample(-2) * 0.05 +
+      sample(-1) * 0.2 +
+      sample(0) * 0.5 +
+      sample(1) * 0.2 +
+      sample(2) * 0.05;
+  }
+
+  for (let ringIndex = 0; ringIndex < visibleRingCount; ringIndex += 1) {
+    const ringT = ringIndex / Math.max(1, visibleRingCount - 1);
+    const colorA = sampleColormap(stopsA, ringT);
+    const colorB = sampleColormap(stopsB, ringT);
+    const waterfallMagnitude = WATERFALL_MAGNITUDES[ringIndex];
+    const shapeMagnitude = WATERFALL_SHAPE_MAGNITUDES[ringIndex];
+
+    // Expand the entire latitude radially from the sphere centre. Scaling both
+    // the circular radius and its Z offset by the same factor preserves the
+    // latitude angle and keeps the deformation spherical rather than ovoid.
+    // The short neighbour blend above keeps successive radial shells touching
+    // through sharp transients, so the cascade front remains connected.
     const latitudeZ = -1 + (2 * (ringIndex + 0.5)) / visibleRingCount;
     const latitudeRadius = Math.sqrt(Math.max(0, 1 - latitudeZ * latitudeZ));
-    const ringMagnitudeScale = 1 + waterfallMagnitude * reactivity * 0.42;
+    const ringMagnitudeScale = 1 + shapeMagnitude * reactivity * 0.42;
     WATERFALL_RING_MATRIX.makeScale(
       latitudeRadius * ringMagnitudeScale,
       latitudeRadius * ringMagnitudeScale,
-      1
+      ringMagnitudeScale
     );
-    WATERFALL_RING_MATRIX.setPosition(0, 0, latitudeZ);
+    WATERFALL_RING_MATRIX.setPosition(
+      0,
+      0,
+      latitudeZ * ringMagnitudeScale
+    );
     sphereRingSystem.setMatrixAt(ringIndex, WATERFALL_RING_MATRIX);
 
     // Keep a faint structural baseline so the complete sphere remains visible;
