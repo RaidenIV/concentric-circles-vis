@@ -7,6 +7,7 @@
  * original build did implicitly at 60 fps; the accumulator keeps that cadence
  * identical at 24, 30 or 60 fps export.
  */
+import * as THREE from "three";
 import { COLORMAPS, engine } from "./config.js";
 import { normalizeAmplitude } from "./analysis.js";
 import { state } from "./core.js";
@@ -689,6 +690,11 @@ function getWaterfallReference(analysis, frameIndex) {
   return 1;
 }
 
+// Reused for per-ring waterfall deformation. The torus geometry is a unit
+// circle in the XY plane, so changing only X/Y scale expands the ring radius
+// without moving its latitude or changing the cascade timing.
+const WATERFALL_RING_MATRIX = new THREE.Matrix4();
+
 /**
  * Build the visible latitude-ring sphere and map audio history onto it as a
  * waterfall. The newest analysis frame enters the north/top ring. Each ring
@@ -714,8 +720,9 @@ function updateConcentricSphereGeometry() {
   const visualizationScale =
     getEffectiveVisualizationScale() * state.sphereRadius * spherePulse;
 
-  // The geometry is a unit sphere. Audio history changes only ring light/color,
-  // so the stacked latitude shell never opens gaps while the waterfall moves.
+  // The geometry is a unit sphere. The whole structure keeps its existing
+  // bass/beat pulse, while each historical waterfall frame additionally
+  // expands the radius of the single latitude ring it currently occupies.
   sphereRingSystem.scale.setScalar(visualizationScale);
   sphereRingSystem.rotation.x = 0.42;
   sphereRingSystem.rotation.y =
@@ -758,6 +765,21 @@ function updateConcentricSphereGeometry() {
       );
     }
 
+    // Magnitude now travels through the geometry as well as the colour. Keep
+    // the ring at its fixed latitude and expand only its circular radius, so a
+    // loud analysis frame visibly swells each successive ring as it cascades
+    // from north/top to south/bottom.
+    const latitudeZ = -1 + (2 * (ringIndex + 0.5)) / visibleRingCount;
+    const latitudeRadius = Math.sqrt(Math.max(0, 1 - latitudeZ * latitudeZ));
+    const ringMagnitudeScale = 1 + waterfallMagnitude * reactivity * 0.42;
+    WATERFALL_RING_MATRIX.makeScale(
+      latitudeRadius * ringMagnitudeScale,
+      latitudeRadius * ringMagnitudeScale,
+      1
+    );
+    WATERFALL_RING_MATRIX.setPosition(0, 0, latitudeZ);
+    sphereRingSystem.setMatrixAt(ringIndex, WATERFALL_RING_MATRIX);
+
     // Keep a faint structural baseline so the complete sphere remains visible;
     // audio energy rides over that baseline as the time-history cascade.
     const reactiveBrightness = baseBrightness * (
@@ -773,6 +795,7 @@ function updateConcentricSphereGeometry() {
       (colorA[2] + (colorB[2] - colorA[2]) * colorMix) * reactiveBrightness;
   }
 
+  sphereRingSystem.instanceMatrix.needsUpdate = true;
   sphereRingSystem.instanceColor.needsUpdate = true;
   sphereRingMaterial.opacity = state.ringOpacity / 100;
 }
