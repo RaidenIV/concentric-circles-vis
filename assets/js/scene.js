@@ -105,7 +105,8 @@ const finalPass = new ShaderPass(
   new THREE.ShaderMaterial({
     uniforms: {
       baseTexture: { value: null },
-      bloomTexture: { value: bloomComposer.renderTarget2.texture }
+      bloomTexture: { value: bloomComposer.renderTarget2.texture },
+      bloomMix: { value: 1.0 }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -117,11 +118,12 @@ const finalPass = new ShaderPass(
     fragmentShader: `
       uniform sampler2D baseTexture;
       uniform sampler2D bloomTexture;
+      uniform float bloomMix;
       varying vec2 vUv;
       void main() {
         vec4 base  = texture2D(baseTexture, vUv);
         vec4 bloom = texture2D(bloomTexture, vUv);
-        gl_FragColor = base + bloom;
+        gl_FragColor = base + bloom * bloomMix;
       }
     `,
     transparent: true
@@ -340,9 +342,12 @@ export function resizeRenderer(width, height, pixelRatio) {
 }
 
 /** Render the selective-bloom pass, then composite over the full scene. */
-export function renderScene() {
-  camera.layers.set(BLOOM_LAYER);
-  bloomComposer.render();
+export function renderScene({ bloomEnabled = true } = {}) {
+  if (bloomEnabled) {
+    camera.layers.set(BLOOM_LAYER);
+    bloomComposer.render();
+  }
   camera.layers.set(0);
+  finalPass.uniforms.bloomMix.value = bloomEnabled ? 1.0 : 0.0;
   finalComposer.render();
 }

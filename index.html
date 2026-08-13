@@ -351,6 +351,28 @@
                             <input type="range" id="reactivity-slider" min="10" max="300" step="1" value="100">
                         </div>
                         <div class="control">
+                            <label for="magnitude-expansion">Magnitude Expansion</label>
+                            <div class="value-editor"><input class="value-input" id="magnitude-expansion-value" type="number" min="0" max="100" step="1" value="42" aria-label="Magnitude Expansion Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="magnitude-expansion" min="0" max="100" step="1" value="42">
+                        </div>
+                        <div class="control">
+                            <label for="cascade-speed">Cascade Speed</label>
+                            <div class="value-editor"><input class="value-input" id="cascade-speed-value" type="number" min="0.25" max="4" step="0.05" value="1" aria-label="Cascade Speed Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                            <input type="range" id="cascade-speed" min="0.25" max="4" step="0.05" value="1">
+                        </div>
+                        <div class="control">
+                            <label for="cascade-smoothing">Cascade Smoothing</label>
+                            <div class="value-editor"><input class="value-input" id="cascade-smoothing-value" type="number" min="0" max="8" step="1" value="2" aria-label="Cascade Smoothing Value"><span class="value-suffix" aria-hidden="true"> rings</span></div>
+                            <input type="range" id="cascade-smoothing" min="0" max="8" step="1" value="2">
+                        </div>
+                        <div class="control">
+                            <label for="cascade-direction">Cascade Direction</label>
+                            <select id="cascade-direction">
+                                <option value="topToBottom">Top → Bottom</option>
+                                <option value="bottomToTop">Bottom → Top</option>
+                            </select>
+                        </div>
+                        <div class="control">
                             <label for="ring-count">Ring Count</label>
                             <div class="value-editor"><input class="value-input" id="ring-count-value" type="number" min="24" max="200" step="1" value="100" aria-label="Ring Count Value"></div>
                             <input type="range" id="ring-count" min="24" max="200" step="1" value="100">
@@ -395,6 +417,13 @@
                                 </div>
                             </div>
                             <div class="collapsible-content" id="clusterBloom">
+                                <div class="control toggle-control">
+                                    <label for="bloom-enabled">Bloom Enabled</label>
+                                    <label class="switch" for="bloom-enabled" aria-label="Bloom enabled" style="grid-area:value;justify-self:end;">
+                                        <input class="switch-input" id="bloom-enabled" type="checkbox" role="switch" checked>
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
                                 <div class="control">
                                     <label for="bloom-base">Base Strength</label>
                                     <div class="value-editor"><input class="value-input" id="bloom-base-value" type="number" min="0" max="2" step="0.05" value="0.6" aria-label="Base Strength Value"></div>

@@ -754,7 +754,14 @@ function updateConcentricSphereGeometry() {
     // scene.js indexes latitude rings south-to-north. Reverse the history
     // offset so the current frame appears at the north/top ring and older
     // frames descend toward the south/bottom ring like a waterfall display.
-    const historyOffset = visibleRingCount - 1 - ringIndex;
+    const cascadeSpeed = clamp(Number(state.cascadeSpeed) || 1, 0.25, 4);
+    const travelOffset = state.cascadeDirection === "bottomToTop"
+      ? ringIndex
+      : visibleRingCount - 1 - ringIndex;
+    // At 1× this is the original one-analysis-frame-per-ring waterfall.
+    // Higher values move a feature through more rings per analysis frame; lower
+    // values spread the same history across more time without changing audio.
+    const historyOffset = Math.round(travelOffset / cascadeSpeed);
     const historyFrame = currentFrame - historyOffset;
     let waterfallMagnitude = 0;
 
@@ -769,21 +776,41 @@ function updateConcentricSphereGeometry() {
     WATERFALL_MAGNITUDES[ringIndex] = waterfallMagnitude;
   }
 
-  // Geometry gets a short symmetric spatial blend across neighbouring rings.
-  // This does not change cascade timing or per-ring audio data; it only removes
-  // abrupt radial steps that can visually detach the leading edge from the
-  // untouched shell when a transient enters the waterfall.
+  // Geometry gets a symmetric spatial blend across neighbouring rings. The
+  // default radius of 2 reproduces the existing 5-ring 5/20/50/20/5 blend
+  // exactly; larger values provide an optional softer shell transition. Colour
+  // and brightness continue to use the untouched one-frame-per-ring data.
+  const smoothingRadius = Math.round(clamp(Number(state.cascadeSmoothing) || 0, 0, 8));
   for (let ringIndex = 0; ringIndex < visibleRingCount; ringIndex += 1) {
     const sample = (offset) => {
       const index = clamp(ringIndex + offset, 0, visibleRingCount - 1);
       return WATERFALL_MAGNITUDES[index];
     };
-    WATERFALL_SHAPE_MAGNITUDES[ringIndex] =
-      sample(-2) * 0.05 +
-      sample(-1) * 0.2 +
-      sample(0) * 0.5 +
-      sample(1) * 0.2 +
-      sample(2) * 0.05;
+
+    if (smoothingRadius === 0) {
+      WATERFALL_SHAPE_MAGNITUDES[ringIndex] = sample(0);
+    } else if (smoothingRadius === 1) {
+      WATERFALL_SHAPE_MAGNITUDES[ringIndex] =
+        sample(-1) * 0.2 + sample(0) * 0.6 + sample(1) * 0.2;
+    } else if (smoothingRadius === 2) {
+      WATERFALL_SHAPE_MAGNITUDES[ringIndex] =
+        sample(-2) * 0.05 +
+        sample(-1) * 0.2 +
+        sample(0) * 0.5 +
+        sample(1) * 0.2 +
+        sample(2) * 0.05;
+    } else {
+      const sigma = Math.max(1, smoothingRadius * 0.5);
+      let weightedMagnitude = 0;
+      let totalWeight = 0;
+      for (let offset = -smoothingRadius; offset <= smoothingRadius; offset += 1) {
+        const weight = Math.exp(-(offset * offset) / (2 * sigma * sigma));
+        weightedMagnitude += sample(offset) * weight;
+        totalWeight += weight;
+      }
+      WATERFALL_SHAPE_MAGNITUDES[ringIndex] =
+        totalWeight > 0 ? weightedMagnitude / totalWeight : sample(0);
+    }
   }
 
   for (let ringIndex = 0; ringIndex < visibleRingCount; ringIndex += 1) {
@@ -800,7 +827,8 @@ function updateConcentricSphereGeometry() {
     // through sharp transients, so the cascade front remains connected.
     const latitudeZ = -1 + (2 * (ringIndex + 0.5)) / visibleRingCount;
     const latitudeRadius = Math.sqrt(Math.max(0, 1 - latitudeZ * latitudeZ));
-    const ringMagnitudeScale = 1 + shapeMagnitude * reactivity * 0.42;
+    const magnitudeExpansion = clamp(Number(state.magnitudeExpansion) || 0, 0, 100) / 100;
+    const ringMagnitudeScale = 1 + shapeMagnitude * reactivity * magnitudeExpansion;
     WATERFALL_RING_MATRIX.makeScale(
       latitudeRadius * ringMagnitudeScale,
       latitudeRadius * ringMagnitudeScale,
@@ -1351,12 +1379,15 @@ export function renderFrame(deltaTime, playing) {
     ? state.bloomBase + avgMagnitude * reactivity * state.bloomGain
     : 0.55;
   state.smoothedBloom += (bloomTarget - state.smoothedBloom) * 0.08;
-  bloomPass.strength = state.smoothedBloom;
+  // Keep the bloom pipeline intact so toggling it back on is instantaneous and
+  // deterministic; zero strength produces the true off state without leaving a
+  // stale bloom texture in the selective-composite pass.
+  bloomPass.strength = state.bloomEnabled ? state.smoothedBloom : 0;
   bloomPass.radius = state.bloomRadius;
   bloomPass.threshold = state.bloomThreshold;
 
   // The standalone project renders only the concentric ring sphere.
   updateConcentricSphereGeometry();
   updateCamera(deltaTime, playing);
-  renderScene();
+  renderScene({ bloomEnabled: state.bloomEnabled });
 }

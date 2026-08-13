@@ -181,6 +181,13 @@ export const elements = {
   // Concentric sphere
   reactivity: byId("reactivity-slider"),
   reactivityValue: byId("reactivity-value"),
+  magnitudeExpansion: byId("magnitude-expansion"),
+  magnitudeExpansionValue: byId("magnitude-expansion-value"),
+  cascadeSpeed: byId("cascade-speed"),
+  cascadeSpeedValue: byId("cascade-speed-value"),
+  cascadeSmoothing: byId("cascade-smoothing"),
+  cascadeSmoothingValue: byId("cascade-smoothing-value"),
+  cascadeDirection: byId("cascade-direction"),
   ringCount: byId("ring-count"),
   ringCountValue: byId("ring-count-value"),
   sphereRadius: byId("sphere-radius"),
@@ -197,6 +204,7 @@ export const elements = {
   rotationAmountValue: byId("rotation-amount-value"),
 
   // Bloom
+  bloomEnabled: byId("bloom-enabled"),
   bloomBase: byId("bloom-base"),
   bloomBaseValue: byId("bloom-base-value"),
   bloomGain: byId("bloom-gain"),

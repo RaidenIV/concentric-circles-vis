@@ -30,6 +30,10 @@ const sectionKeys = {
   ],
   sphere: [
     "reactivity",
+    "magnitudeExpansion",
+    "cascadeSpeed",
+    "cascadeSmoothing",
+    "cascadeDirection",
     "ringCount",
     "sphereRadius",
     "sphereSize",
@@ -38,7 +42,7 @@ const sectionKeys = {
     "rotationSpeed",
     "rotationAmount"
   ],
-  bloom: ["bloomBase", "bloomGain", "bloomRadius", "bloomThreshold"],
+  bloom: ["bloomEnabled", "bloomBase", "bloomGain", "bloomRadius", "bloomThreshold"],
   color: ["cycleSpeed", "brightness"],
   effects: ["beatFlashEnabled", "beatFlashIntensity", "beatSensitivity"],
   "export-format": [

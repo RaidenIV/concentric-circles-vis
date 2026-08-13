@@ -23,7 +23,8 @@ const ENUMS = {
   ]),
   qualityPreset: new Set(["custom", "performance", "balanced", "high", "maximum", "auto"]),
   videoResolution: new Set(["1080", "2k", "4k"]),
-  videoFileType: new Set(["mp4", "mkv"])
+  videoFileType: new Set(["mp4", "mkv"]),
+  cascadeDirection: new Set(["topToBottom", "bottomToTop"])
 };
 
 const NUMERIC_SELECTS = {
@@ -32,7 +33,8 @@ const NUMERIC_SELECTS = {
 };
 
 const BOOLEAN_KEYS = new Set([
-  "muted", "audioLoop", "hudEnabled", "beatFlashEnabled", "loopSnap"
+  "muted", "audioLoop", "hudEnabled", "bloomEnabled",
+  "beatFlashEnabled", "loopSnap"
 ]);
 
 export function getSerializableSettings() {

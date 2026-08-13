@@ -177,6 +177,18 @@ function bindControls() {
 
   // Concentric sphere
   bindRange(elements.reactivity, elements.reactivityValue, "reactivity");
+  bindRange(
+    elements.magnitudeExpansion,
+    elements.magnitudeExpansionValue,
+    "magnitudeExpansion"
+  );
+  bindRange(elements.cascadeSpeed, elements.cascadeSpeedValue, "cascadeSpeed");
+  bindRange(
+    elements.cascadeSmoothing,
+    elements.cascadeSmoothingValue,
+    "cascadeSmoothing"
+  );
+  bindSelect(elements.cascadeDirection, "cascadeDirection");
   bindRange(elements.ringCount, elements.ringCountValue, "ringCount");
   bindRange(elements.sphereRadius, elements.sphereRadiusValue, "sphereRadius");
   bindRange(elements.sphereSize, elements.sphereSizeValue, "sphereSize");
@@ -186,6 +198,7 @@ function bindControls() {
   bindRange(elements.rotationAmount, elements.rotationAmountValue, "rotationAmount");
 
   // Bloom
+  bindToggle(elements.bloomEnabled, "bloomEnabled");
   bindRange(elements.bloomBase, elements.bloomBaseValue, "bloomBase");
   bindRange(elements.bloomGain, elements.bloomGainValue, "bloomGain");
   bindRange(elements.bloomRadius, elements.bloomRadiusValue, "bloomRadius");

@@ -39,6 +39,10 @@ export const defaults = Object.freeze({
 
   // Concentric sphere
   reactivity: 100,
+  magnitudeExpansion: 42,
+  cascadeSpeed: 1.0,
+  cascadeSmoothing: 2,
+  cascadeDirection: "topToBottom",
   ringCount: 123,
   sphereRadius: 1.0,
   sphereSize: 70,
@@ -78,6 +82,7 @@ export const defaults = Object.freeze({
   trailOpacity: 55,
 
   // Bloom
+  bloomEnabled: true,
   bloomBase: 0.6,
   bloomGain: 3.2,
   bloomRadius: 0.45,
@@ -96,7 +101,7 @@ export const defaults = Object.freeze({
 
 
 export const SETTINGS_APP = "Concentric Sphere Visualizer";
-export const SETTINGS_VERSION = 3;
+export const SETTINGS_VERSION = 4;
 
 export const QUALITY_PRESETS = Object.freeze({
   performance: { renderPixelRatioLimit: 1 },
@@ -112,9 +117,10 @@ export const PERSISTED_SETTING_KEYS = Object.freeze([
   "cameraPreset", "cameraSpeed", "cameraAmount", "cameraDistance", "cameraElevation", "cameraAzimuth",
   "hudEnabled", "hudOpacity", "hudScale",
   "qualityPreset", "renderPixelRatioLimit",
-  "reactivity", "ringCount", "sphereRadius", "sphereSize", "ringOpacity", "ringLineWidth",
+  "reactivity", "magnitudeExpansion", "cascadeSpeed", "cascadeSmoothing", "cascadeDirection",
+  "ringCount", "sphereRadius", "sphereSize", "ringOpacity", "ringLineWidth",
   "rotationSpeed", "rotationAmount",
-  "bloomBase", "bloomGain", "bloomRadius", "bloomThreshold",
+  "bloomEnabled", "bloomBase", "bloomGain", "bloomRadius", "bloomThreshold",
   "lockedCmapIndex", "cycleSpeed", "brightness",
   "beatFlashEnabled", "beatFlashIntensity", "beatSensitivity",
   "loopBpm", "loopBars", "loopSnap", "loopStart", "loopEnd",
