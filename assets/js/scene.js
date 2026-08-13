@@ -229,6 +229,51 @@ trailSystem.visible = false;
 scene.add(trailSystem);
 
 /* ---------------------------------------------------------------------------
+   Concentric-sphere rings
+
+   The Concentric Sphere mode is intentionally line-based rather than a point
+   cloud. Each ring is a complete circle, and the stack of circular
+   cross-sections forms the three-dimensional sphere.
+--------------------------------------------------------------------------- */
+export const SPHERE_RING_COUNT = 36;
+export const SPHERE_RING_SEGMENTS = 128;
+const SPHERE_RING_VERTEX_CAPACITY =
+  SPHERE_RING_COUNT * SPHERE_RING_SEGMENTS * 2;
+
+export const sphereRingBuffers = {
+  positions: new Float32Array(SPHERE_RING_VERTEX_CAPACITY * 3),
+  colors: new Float32Array(SPHERE_RING_VERTEX_CAPACITY * 3)
+};
+
+export const sphereRingGeometry = new THREE.BufferGeometry();
+sphereRingGeometry.setAttribute(
+  "position",
+  new THREE.BufferAttribute(sphereRingBuffers.positions, 3)
+);
+sphereRingGeometry.setAttribute(
+  "color",
+  new THREE.BufferAttribute(sphereRingBuffers.colors, 3)
+);
+sphereRingGeometry.setDrawRange(0, 0);
+
+export const sphereRingMaterial = new THREE.LineBasicMaterial({
+  vertexColors: true,
+  transparent: true,
+  opacity: defaults.particleOpacity / 100,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+});
+
+export const sphereRingSystem = new THREE.LineSegments(
+  sphereRingGeometry,
+  sphereRingMaterial
+);
+sphereRingSystem.layers.enable(BLOOM_LAYER);
+sphereRingSystem.frustumCulled = false;
+sphereRingSystem.visible = false;
+scene.add(sphereRingSystem);
+
+/* ---------------------------------------------------------------------------
    Sizing
 --------------------------------------------------------------------------- */
 export function resizeRenderer(width, height, pixelRatio) {

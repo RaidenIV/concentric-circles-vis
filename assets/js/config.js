@@ -40,7 +40,7 @@ export const defaults = Object.freeze({
 
   // Particles
   reactivity: 100,
-  boidType: "flow",
+  boidType: "sphereRings",
   morphScope: "all",
   morphSpeed: 1.0,
   movementSpeed: 1.0,
