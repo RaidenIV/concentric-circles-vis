@@ -232,10 +232,11 @@ scene.add(trailSystem);
 /* ---------------------------------------------------------------------------
    Concentric-sphere rings
 
-   The standalone visualizer renders dense, complete circular rings as one
-   instanced torus mesh. Every ring shares the same center and radius; only its
-   plane rotates through the sphere. At the default width, neighboring rings
-   overlap just enough at the equator to close the shell with no visual gaps.
+   The standalone visualizer renders dense, complete latitude circles as one
+   instanced torus mesh. The rings are stacked from the south pole to the north
+   pole; each ring stays horizontal while its radius follows the spherical
+   cross-section at that height. Neighboring rings overlap slightly at the
+   default width so the stack reads as one continuous spherical shell.
 --------------------------------------------------------------------------- */
 export const SPHERE_RING_COUNT = 200;
 export const SPHERE_RING_SEGMENTS = 256;
@@ -247,10 +248,10 @@ let sphereRingLayoutWidth = 0;
 function makeSphereRingGeometry(ringCount, lineWidth) {
   const count = Math.max(24, Math.min(SPHERE_RING_COUNT, Math.round(ringCount)));
   const width = Math.max(0.25, Math.min(3, Number(lineWidth) || 1));
-  // Adjacent great-circle planes are π/count radians apart. A tube radius of
-  // half that angular spacing makes neighboring rings meet at the equator; the
-  // user-facing width is a multiplier around that gap-closing baseline.
-  const tubeRadius = Math.min(0.2, (Math.PI / (2 * count)) * width * 1.04);
+  // Latitude centers are separated by 2/count on the unit sphere. A tube
+  // radius of 1/count makes adjacent rings touch vertically; the small overlap
+  // prevents rasterization/bloom from exposing hairline gaps between slices.
+  const tubeRadius = Math.min(0.2, (1 / count) * width * 1.04);
   return new THREE.TorusGeometry(1, tubeRadius, 6, SPHERE_RING_SEGMENTS);
 }
 
@@ -292,12 +293,17 @@ export function configureSphereRingLayout(ringCount, lineWidth) {
 
   sphereRingSystem.count = count;
   for (let ringIndex = 0; ringIndex < count; ringIndex += 1) {
-    // A circle's plane repeats after π radians, so [0, π) gives every unique
-    // meridian orientation without duplicating the first ring at the end.
-    const planeAngle = (ringIndex / count) * Math.PI;
-    sphereRingDummy.position.set(0, 0, 0);
-    sphereRingDummy.rotation.set(0, planeAngle, 0);
-    sphereRingDummy.scale.set(1, 1, 1);
+    // Sample the midpoint of each latitude band so the first and last torus
+    // tubes cap the poles instead of collapsing into zero-radius circles.
+    const latitudeZ = -1 + (2 * (ringIndex + 0.5)) / count;
+    const latitudeRadius = Math.sqrt(Math.max(0, 1 - latitudeZ * latitudeZ));
+
+    // TorusGeometry is centered on the local Z axis, so translating it along Z
+    // and shrinking X/Y produces a horizontal latitude ring. Keeping local Z
+    // unscaled preserves the vertical tube thickness that closes adjacent bands.
+    sphereRingDummy.position.set(0, 0, latitudeZ);
+    sphereRingDummy.rotation.set(0, 0, 0);
+    sphereRingDummy.scale.set(latitudeRadius, latitudeRadius, 1);
     sphereRingDummy.updateMatrix();
     sphereRingSystem.setMatrixAt(ringIndex, sphereRingDummy.matrix);
   }
