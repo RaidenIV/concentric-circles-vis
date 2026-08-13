@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/loop-editor.css">
+</head>
+
+<body>
+    <div class="visualizer-container" id="visualizer-container">
+        <canvas id="canvas"></canvas>
+        <canvas id="hud-canvas" aria-hidden="true"></canvas>
+
+        <div id="controls">
+            <!-- Logo centered at top -->
+            <div class="logo-top">
+                <img src="https://images.squarespace-cdn.com/content/v1/681ea18dd168a935c26295bd/f173dc58-2856-4e84-b647-8cf46ca113ad/phonto-Photoroom.png?format=1000w" alt="Logo" class="logo">
+            </div>
+
+            <!-- Title row with minimize -->
+            <div class="header-container">
+                <div class="app-title">Particle Visualizer</div>
+                <button class="minimize-btn" id="minimize-btn" title="Collapse panel" type="button">−</button>
+            </div>
+
+            <div class="controls-content">
+
+                <!-- ===================== FILE AND PLAYBACK ===================== -->
+                <section class="section" data-collapsible-title="File and Playback">
+                    <div class="collapsible-header">
+                        <h2>File and Playback</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="playback" title="Reset File and Playback to defaults" aria-label="Reset File and Playback to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionPlayback" aria-expanded="true" title="Collapse File and Playback" aria-label="Collapse File and Playback" type="button">−</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionPlayback">
+
+                        <label class="file-button" id="load-btn">
+                            <span id="load-btn-text">Load Audio File</span>
+                            <input type="file" id="audio-file" accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg,.flac">
+                        </label>
+
+                        <div class="audio-load-progress-wrap" id="audio-load-wrap" hidden>
+                            <progress id="audio-load-progress" max="100" value="0" aria-label="Audio loading progress"></progress>
+                            <span class="progress-text" id="audio-load-percent">0%</span>
+                        </div>
+                        <p class="visually-hidden" aria-live="polite" id="audio-load-stage">Preparing audio…</p>
+
+                        <div class="info">
+                            <div class="section-title" style="margin:0;">Audio File</div>
+                            <div id="audio-name" class="info-value">No file loaded</div>
+                        </div>
+                        <div class="file-info-grid" aria-label="Loaded audio information">
+                            <span>Name</span><strong id="file-info-name" title="No file loaded">No file loaded</strong>
+                            <span>Type</span><strong id="file-info-type">Unavailable</strong>
+                            <span>Size</span><strong id="file-info-size">Unavailable</strong>
+                            <span>Duration</span><strong id="file-info-duration">Unavailable</strong>
+                            <span>Sample Rate</span><strong id="file-info-sample-rate">Unavailable</strong>
+                            <span>Channels</span><strong id="file-info-channels">Unavailable</strong>
+                            <span>Decode</span><strong id="file-info-decode-status">Not loaded</strong>
+                        </div>
+                        <div class="status-line" data-state="idle" id="audio-file-status" aria-live="polite">Choose or drop a supported audio file.</div>
+
+                        <div class="button-row">
+                            <button id="play-btn" class="play" disabled type="button">▶ Play</button>
+                            <button id="loop-btn" class="secondary" disabled type="button">Loop</button>
+                        </div>
+
+                        <!-- Progress bar and time readout -->
+                        <div class="progress-container" id="progress-container" style="display: none;">
+                            <div class="progress-label">
+                                <span class="time-display" id="current-time">0:00</span>
+                                <span class="time-display" id="duration-time">0:00</span>
+                            </div>
+                            <div class="progress-bar" id="progress-bar">
+                                <div class="progress-fill" id="progress-fill"></div>
+                            </div>
+                        </div>
+
+                        <div class="control">
+                            <label for="volume-slider">Volume</label>
+                            <div class="value-editor"><input class="value-input" id="volume-value" type="number" min="0" max="100" step="1" value="100" aria-label="Volume Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="volume-slider" min="0" max="100" step="1" value="100">
+                        </div>
+
+                        <div class="control toggle-control playback-mute-control">
+                            <label for="mute-toggle">Mute</label>
+                            <label class="switch" for="mute-toggle" aria-label="Mute audio">
+                                <input class="switch-input" id="mute-toggle" type="checkbox" role="switch">
+                                <span class="switch-track" aria-hidden="true"></span>
+                            </label>
+                        </div>
+
+                        <!-- ---------------- Loop Selection ---------------- -->
+                        <div class="control-cluster is-collapsed legacy-loop-editor" data-collapsible-title="Loop Selection">
+                            <div class="collapsible-header">
+                                <h3>Loop Selection</h3>
+                                <div class="collapsible-header-actions">
+                                    <button class="section-reset" data-reset-section="loop" title="Reset Loop Selection to defaults" aria-label="Reset Loop Selection to defaults" type="button">↺</button>
+                                    <button class="collapse-toggle" aria-controls="clusterLoop" aria-expanded="false" title="Expand Loop Selection" aria-label="Expand Loop Selection" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="collapsible-content" id="clusterLoop">
+                                <div class="loop-wave-wrap" id="loop-wave-wrap" aria-label="Audio waveform loop selector">
+                                    <canvas class="loop-wave-canvas" id="loop-wave-canvas"></canvas>
+                                    <div class="loop-selection-region is-disabled" id="loop-region"></div>
+                                    <button class="loop-handle" id="loop-start-handle" disabled type="button" aria-label="Move loop start"></button>
+                                    <button class="loop-handle" id="loop-end-handle" disabled type="button" aria-label="Move loop end"></button>
+                                    <div class="loop-playhead" id="loop-playhead" aria-hidden="true"></div>
+                                </div>
+                                <div class="loop-time-row"><span id="loop-start-readout">Start 0:00.000</span><span id="loop-end-readout">End 0:00.000</span></div>
+                                <div class="loop-info-row"><span id="loop-duration-readout">Duration 0:00.000</span><span id="loop-beat-readout">Beat —</span></div>
+                                <div class="status-line" data-state="idle" id="loop-status" aria-live="polite">Load audio to create a beat-snapped loop.</div>
+
+                                <div class="control">
+                                    <label for="loop-bpm-value">Detected BPM</label>
+                                    <div class="value-editor"><input class="value-input" id="loop-bpm-value" type="number" min="40" max="300" step="1" value="120" disabled aria-label="Detected BPM Value"></div>
+                                </div>
+                                <div class="control">
+                                    <label for="loop-bars-value">Loop Length in Bars</label>
+                                    <div class="value-editor"><input class="value-input" id="loop-bars-value" type="number" min="1" max="999" step="1" value="4" disabled aria-label="Loop Length in Bars Value"></div>
+                                </div>
+                                <div class="control toggle-control">
+                                    <label for="loop-snap">Snap Selection to Beats</label>
+                                    <label class="switch" for="loop-snap" aria-label="Snap selection to beats">
+                                        <input class="switch-input" id="loop-snap" type="checkbox" role="switch" checked disabled>
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="button-row">
+                                    <button class="secondary" id="detect-bpm" disabled type="button">Detect BPM</button>
+                                    <button class="secondary" id="full-track-loop" disabled type="button">Full Track</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- ===================== VIEWPORT ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="Viewport">
+                    <div class="collapsible-header">
+                        <h2>Viewport</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="viewport" title="Reset Viewport to defaults" aria-label="Reset Viewport to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionViewport" aria-expanded="false" title="Expand Viewport" aria-label="Expand Viewport" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionViewport">
+                        <div class="control">
+                            <label for="viewport-preset">Viewport Format</label>
+                            <select id="viewport-preset">
+                                <option value="fill" selected>Fill Window</option>
+                                <option value="landscape">Landscape — 16:9</option>
+                                <option value="square">Square — 1:1</option>
+                                <option value="portrait">Portrait — 9:16</option>
+                            </select>
+                            <div class="control-hint">Export dimensions follow the selected format. Fill Window uses the current browser aspect ratio.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== HUD ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="HUD">
+                    <div class="collapsible-header">
+                        <h2>HUD</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="hud" title="Reset HUD to defaults" aria-label="Reset HUD to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionHud" aria-expanded="false" title="Expand HUD" aria-label="Expand HUD" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionHud">
+                        <div class="control toggle-control hud-toggle-control">
+                            <label for="hud-enabled">HUD Overlay</label>
+                            <label class="switch" for="hud-enabled" aria-label="HUD overlay">
+                                <input class="switch-input" id="hud-enabled" type="checkbox" role="switch" checked>
+                                <span class="switch-track" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                        <div class="control">
+                            <label for="hud-opacity">HUD Opacity</label>
+                            <div class="value-editor"><input class="value-input" id="hud-opacity-value" type="number" min="0" max="1" step="0.05" value="0.9" aria-label="HUD Opacity Value"></div>
+                            <input type="range" id="hud-opacity" min="0" max="1" step="0.05" value="0.9">
+                        </div>
+                        <div class="control">
+                            <label for="hud-scale">HUD Scale</label>
+                            <div class="value-editor"><input class="value-input" id="hud-scale-value" type="number" min="0.5" max="2" step="0.05" value="1" aria-label="HUD Scale Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                            <input type="range" id="hud-scale" min="0.5" max="2" step="0.05" value="1">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== CAMERA ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="Camera">
+                    <div class="collapsible-header">
+                        <h2>Camera</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="camera" title="Reset Camera to defaults" aria-label="Reset Camera to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionCamera" aria-expanded="false" title="Expand Camera" aria-label="Expand Camera" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionCamera">
+                        <div class="control">
+                            <label for="camera-preset">Movement Preset</label>
+                            <select id="camera-preset">
+                                <option value="static" selected>Static</option>
+                                <option value="orbit">Orbit</option>
+                                <option value="horizontalOrbit">Orbit — Horizontal</option>
+                                <option value="verticalArc">Vertical Arc</option>
+                                <option value="helix">Helix</option>
+                                <option value="pendulum">Pendulum</option>
+                                <option value="cinematicSweep">Cinematic Sweep</option>
+                                <option value="figure8">Figure Eight</option>
+                                <option value="pushPull">Push / Pull</option>
+                                <option value="drift">Drift</option>
+                                <option value="spectralCentroid">Audio Follow — Spectral Centroid</option>
+                            </select>
+                        </div>
+                        <div class="control">
+                            <label for="camera-speed">Movement Speed</label>
+                            <div class="value-editor"><input class="value-input" id="camera-speed-value" type="number" min="0.1" max="3" step="0.05" value="1" aria-label="Camera Movement Speed Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                            <input type="range" id="camera-speed" min="0.1" max="3" step="0.05" value="1">
+                        </div>
+                        <div class="control">
+                            <label for="camera-amount">Movement Amount</label>
+                            <div class="value-editor"><input class="value-input" id="camera-amount-value" type="number" min="0" max="200" step="5" value="100" aria-label="Camera Movement Amount Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="camera-amount" min="0" max="200" step="5" value="100">
+                        </div>
+                        <div class="control">
+                            <label for="camera-distance">Camera Distance</label>
+                            <div class="value-editor"><input class="value-input" id="camera-distance-value" type="number" min="20" max="120" step="1" value="50" aria-label="Camera Distance Value"></div>
+                            <input type="range" id="camera-distance" min="20" max="120" step="1" value="50">
+                        </div>
+                        <div class="control">
+                            <label for="camera-elevation">Elevation</label>
+                            <div class="value-editor"><input class="value-input" id="camera-elevation-value" type="number" min="-89" max="89" step="1" value="0" aria-label="Camera Elevation Value"><span class="value-suffix" aria-hidden="true">°</span></div>
+                            <input type="range" id="camera-elevation" min="-89" max="89" step="1" value="0">
+                        </div>
+                        <div class="control">
+                            <label for="camera-azimuth">Azimuth</label>
+                            <div class="value-editor"><input class="value-input" id="camera-azimuth-value" type="number" min="-180" max="180" step="1" value="0" aria-label="Camera Azimuth Value"><span class="value-suffix" aria-hidden="true">°</span></div>
+                            <input type="range" id="camera-azimuth" min="-180" max="180" step="1" value="0">
+                        </div>
+                        <button id="center-visualization" class="secondary" type="button">Center Visualization</button>
+                    </div>
+                </section>
+
+                <!-- ===================== AUDIO RESOLUTION ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="Audio Resolution">
+                    <div class="collapsible-header">
+                        <h2>Audio Resolution</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="audio" title="Reset Audio Resolution to defaults" aria-label="Reset Audio Resolution to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionAudio" aria-expanded="false" title="Expand Audio Resolution" aria-label="Expand Audio Resolution" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionAudio">
+                        <div class="control">
+                            <label for="fft-size">Audio Resolution</label>
+                            <select id="fft-size">
+                                <option value="256">1x (256 FFT)</option>
+                                <option value="512">2x (512 FFT)</option>
+                                <option value="1024">4x (1024 FFT)</option>
+                                <option value="2048">8x (2048 FFT)</option>
+                                <option value="4096" selected>16x (4096 FFT)</option>
+                                <option value="8192">32x (8192 FFT)</option>
+                                <option value="16384">64x (16384 FFT)</option>
+                            </select>
+                            <div class="audio-load-progress-wrap" id="fft-load-wrap" hidden aria-live="polite">
+                                <progress id="fft-load-progress" max="100" value="0" aria-label="Audio resolution analysis progress"></progress>
+                                <span class="progress-text" id="fft-load-percent">0%</span>
+                            </div>
+                        </div>
+                        <div class="control">
+                            <label for="smoothing">Smoothing</label>
+                            <div class="value-editor"><input class="value-input" id="smoothing-value" type="number" min="0" max="0.95" step="0.05" value="0.8" aria-label="Smoothing Value"></div>
+                            <input type="range" id="smoothing" min="0" max="0.95" step="0.05" value="0.8">
+                        </div>
+                        <div class="control">
+                            <label for="amplitude-mode">Amplitude Mode</label>
+                            <select id="amplitude-mode">
+                                <option value="fixed">Fixed</option>
+                                <option value="track">Track Normalized</option>
+                                <option value="adaptive" selected>Adaptive</option>
+                            </select>
+                        </div>
+                        <div class="control">
+                            <label for="input-gain">Input Gain</label>
+                            <div class="value-editor"><input class="value-input" id="input-gain-value" type="number" min="0.25" max="4" step="0.05" value="1" aria-label="Input Gain Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                            <input type="range" id="input-gain" min="0.25" max="4" step="0.05" value="1">
+                        </div>
+                        <div class="control">
+                            <label for="noise-floor">Noise Floor</label>
+                            <div class="value-editor"><input class="value-input" id="noise-floor-value" type="number" min="0" max="30" step="0.5" value="2.5" aria-label="Noise Floor Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="noise-floor" min="0" max="30" step="0.5" value="2.5">
+                        </div>
+                        <div class="control">
+                            <label for="dynamic-range">Dynamic Range</label>
+                            <div class="value-editor"><input class="value-input" id="dynamic-range-value" type="number" min="24" max="96" step="1" value="60" aria-label="Dynamic Range Value"><span class="value-suffix" aria-hidden="true">dB</span></div>
+                            <input type="range" id="dynamic-range" min="24" max="96" step="1" value="60">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== PERFORMANCE ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="Performance">
+                    <div class="collapsible-header">
+                        <h2>Performance</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="performance" title="Reset Performance to defaults" aria-label="Reset Performance to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionPerformance" aria-expanded="false" title="Expand Performance" aria-label="Expand Performance" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionPerformance">
+                        <div class="control">
+                            <label for="quality-preset">Quality Preset</label>
+                            <select id="quality-preset">
+                                <option value="custom" selected>Custom — Current</option>
+                                <option value="performance">Performance</option>
+                                <option value="balanced">Balanced</option>
+                                <option value="high">High</option>
+                                <option value="maximum">Maximum</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                            <div class="control-hint" id="quality-status">Custom · 60 FPS</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== PARTICLES ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="Particles">
+                    <div class="collapsible-header">
+                        <h2>Particles</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="particles" title="Reset Particles to defaults" aria-label="Reset Particles to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionParticles" aria-expanded="false" title="Expand Particles" aria-label="Expand Particles" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionParticles">
+                        <div class="control">
+                            <label for="boid-type">Simulation Type</label>
+                            <select id="boid-type">
+                                <option value="flow" selected>Flow — Original</option>
+                                <option value="flock">Flock</option>
+                                <option value="swarm">Swarm</option>
+                                <option value="vortex">Vortex</option>
+                                <option value="orbit">Orbit</option>
+                                <option value="liquid">Liquid</option>
+                                <option value="sphereRings">Concentric Sphere</option>
+                                <option value="lorenz">Attractor — Lorenz</option>
+                                <option value="rossler">Attractor — Rössler</option>
+                                <option value="halvorsen">Attractor — Halvorsen</option>
+                                <option value="aizawa">Attractor — Aizawa</option>
+                                <option value="thomas">Attractor — Thomas</option>
+                                <option value="dadras">Attractor — Dadras</option>
+                                <option value="morph">Morph</option>
+                            </select>
+                        </div>
+                        <div class="control" id="morph-scope-control" hidden>
+                            <label for="morph-scope">Morph Between</label>
+                            <select id="morph-scope">
+                                <option value="all" selected>All Simulation Types</option>
+                                <option value="boids">Boid Simulations Only</option>
+                                <option value="attractors">Chaotic Attractors Only</option>
+                            </select>
+                        </div>
+                        <div class="control">
+                            <label for="attractor-color-source">Color Source</label>
+                            <select id="attractor-color-source">
+                                <option value="speed" selected>Speed — Trajectory Velocity</option>
+                                <option value="lobe">Lobe — Wing Membership</option>
+                                <option value="radius">Radius — Distance From Center</option>
+                            </select>
+                        </div>
+                        <div class="control">
+                            <label for="reactivity-slider">Reactivity</label>
+                            <div class="value-editor"><input class="value-input" id="reactivity-value" type="number" min="10" max="300" step="1" value="100" aria-label="Reactivity Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="reactivity-slider" min="10" max="300" step="1" value="100">
+                        </div>
+                        <div class="control-cluster is-collapsed" data-collapsible-title="Simulation Types">
+                            <div class="collapsible-header">
+                                <h3>Simulation Types</h3>
+                                <div class="collapsible-header-actions">
+                                    <button class="section-reset" data-reset-section="boids" title="Reset Simulation Types to defaults" aria-label="Reset Simulation Types to defaults" type="button">↺</button>
+                                    <button class="collapse-toggle" aria-controls="clusterBoids" aria-expanded="false" title="Expand Simulation Types" aria-label="Expand Simulation Types" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="collapsible-content" id="clusterBoids">
+                                <div class="control" id="morph-speed-control" hidden>
+                                    <label for="morph-speed">Morph Speed</label>
+                                    <div class="value-editor"><input class="value-input" id="morph-speed-value" type="number" min="0.1" max="3" step="0.05" value="1" aria-label="Morph Speed Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                                    <input type="range" id="morph-speed" min="0.1" max="3" step="0.05" value="1">
+                                </div>
+                                <div class="control">
+                                    <label for="movement-speed">Movement Speed</label>
+                                    <div class="value-editor"><input class="value-input" id="movement-speed-value" type="number" min="0.1" max="3" step="0.05" value="1" aria-label="Movement Speed Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                                    <input type="range" id="movement-speed" min="0.1" max="3" step="0.05" value="1">
+                                </div>
+                                <div class="control">
+                                    <label for="movement-amount">Movement Amount</label>
+                                    <div class="value-editor"><input class="value-input" id="movement-amount-value" type="number" min="0" max="200" step="5" value="100" aria-label="Movement Amount Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                                    <input type="range" id="movement-amount" min="0" max="200" step="5" value="100">
+                                </div>
+                                <div class="control">
+                                    <label for="boid-alignment">Alignment</label>
+                                    <div class="value-editor"><input class="value-input" id="boid-alignment-value" type="number" min="0" max="200" step="5" value="100" aria-label="Boid Alignment Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                                    <input type="range" id="boid-alignment" min="0" max="200" step="5" value="100">
+                                </div>
+                                <div class="control">
+                                    <label for="boid-cohesion">Cohesion</label>
+                                    <div class="value-editor"><input class="value-input" id="boid-cohesion-value" type="number" min="0" max="200" step="5" value="100" aria-label="Boid Cohesion Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                                    <input type="range" id="boid-cohesion" min="0" max="200" step="5" value="100">
+                                </div>
+                                <div class="control">
+                                    <label for="boid-separation">Separation</label>
+                                    <div class="value-editor"><input class="value-input" id="boid-separation-value" type="number" min="0" max="200" step="5" value="100" aria-label="Boid Separation Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                                    <input type="range" id="boid-separation" min="0" max="200" step="5" value="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="control-cluster is-collapsed" data-collapsible-title="Chaotic Attractors">
+                            <div class="collapsible-header">
+                                <h3>Chaotic Attractors</h3>
+                                <div class="collapsible-header-actions">
+                                    <button class="section-reset" data-reset-section="attractors" title="Reset Chaotic Attractors to defaults" aria-label="Reset Chaotic Attractors to defaults" type="button">↺</button>
+                                    <button class="collapse-toggle" aria-controls="clusterAttractors" aria-expanded="false" title="Expand Chaotic Attractors" aria-label="Expand Chaotic Attractors" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="collapsible-content" id="clusterAttractors">
+                                <div class="control">
+                                    <label for="traversal-floor">Traversal Floor</label>
+                                    <div class="value-editor"><input class="value-input" id="traversal-floor-value" type="number" min="0" max="2" step="0.05" value="0.25" aria-label="Traversal Floor Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                                    <input type="range" id="traversal-floor" min="0" max="2" step="0.05" value="0.25">
+                                </div>
+                                <div class="control">
+                                    <label for="traversal-range">Traversal Range</label>
+                                    <div class="value-editor"><input class="value-input" id="traversal-range-value" type="number" min="0" max="16" step="0.25" value="8" aria-label="Traversal Range Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                                    <input type="range" id="traversal-range" min="0" max="16" step="0.25" value="8">
+                                </div>
+                                <div class="control">
+                                    <label for="traversal-curve">Traversal Curve</label>
+                                    <div class="value-editor"><input class="value-input" id="traversal-curve-value" type="number" min="0.5" max="4" step="0.1" value="1.8" aria-label="Traversal Curve Value"></div>
+                                    <input type="range" id="traversal-curve" min="0.5" max="4" step="0.1" value="1.8">
+                                </div>
+                                <div class="control">
+                                    <label for="beat-traversal-boost">Beat Impulse</label>
+                                    <div class="value-editor"><input class="value-input" id="beat-traversal-boost-value" type="number" min="0" max="300" step="5" value="60" aria-label="Beat Impulse Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                                    <input type="range" id="beat-traversal-boost" min="0" max="300" step="5" value="60">
+                                </div>
+                                <div class="control toggle-control">
+                                    <label for="attractor-trails">Trails</label>
+                                    <label class="switch" for="attractor-trails" aria-label="Attractor trails">
+                                        <input class="switch-input" id="attractor-trails" type="checkbox" role="switch" checked>
+                                        <span class="switch-track" aria-hidden="true"></span>
+                                    </label>
+                                </div>
+                                <div class="control">
+                                    <label for="trail-length">Trail Length</label>
+                                    <div class="value-editor"><input class="value-input" id="trail-length-value" type="number" min="2" max="48" step="1" value="24" aria-label="Trail Length Value"></div>
+                                    <input type="range" id="trail-length" min="2" max="48" step="1" value="24">
+                                </div>
+                                <div class="control">
+                                    <label for="trail-particles">Trail Particles</label>
+                                    <div class="value-editor"><input class="value-input" id="trail-particles-value" type="number" min="200" max="4000" step="100" value="1500" aria-label="Trail Particles Value"></div>
+                                    <input type="range" id="trail-particles" min="200" max="4000" step="100" value="1500">
+                                </div>
+                                <div class="control">
+                                    <label for="trail-opacity">Trail Opacity</label>
+                                    <div class="value-editor"><input class="value-input" id="trail-opacity-value" type="number" min="0" max="100" step="1" value="55" aria-label="Trail Opacity Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                                    <input type="range" id="trail-opacity" min="0" max="100" step="1" value="55">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="control">
+                            <label for="visualization-size">Visualization Size</label>
+                            <div class="value-editor"><input class="value-input" id="visualization-size-value" type="number" min="25" max="250" step="5" value="100" aria-label="Visualization Size Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="visualization-size" min="25" max="250" step="5" value="100">
+                        </div>
+                        <div class="control">
+                            <label for="min-particles">Minimum Particles</label>
+                            <div class="value-editor"><input class="value-input" id="min-particles-value" type="number" min="200" max="8000" step="100" value="800" aria-label="Minimum Particles Value"></div>
+                            <input type="range" id="min-particles" min="200" max="8000" step="100" value="800">
+                        </div>
+                        <div class="control">
+                            <label for="max-particles">Maximum Particles</label>
+                            <div class="value-editor"><input class="value-input" id="max-particles-value" type="number" min="2000" max="40000" step="500" value="20000" aria-label="Maximum Particles Value"></div>
+                            <input type="range" id="max-particles" min="2000" max="40000" step="500" value="20000">
+                        </div>
+                        <div class="control">
+                            <label for="particle-size">Particle Size</label>
+                            <div class="value-editor"><input class="value-input" id="particle-size-value" type="number" min="0.02" max="0.6" step="0.01" value="0.15" aria-label="Particle Size Value"></div>
+                            <input type="range" id="particle-size" min="0.02" max="0.6" step="0.01" value="0.15">
+                        </div>
+                        <div class="control">
+                            <label for="particle-opacity">Particle Opacity</label>
+                            <div class="value-editor"><input class="value-input" id="particle-opacity-value" type="number" min="10" max="100" step="1" value="80" aria-label="Particle Opacity Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="particle-opacity" min="10" max="100" step="1" value="80">
+                        </div>
+                        <div class="control">
+                            <label for="noise-scale">Noise Scale</label>
+                            <div class="value-editor"><input class="value-input" id="noise-scale-value" type="number" min="0.1" max="3" step="0.05" value="1" aria-label="Noise Scale Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                            <input type="range" id="noise-scale" min="0.1" max="3" step="0.05" value="1">
+                        </div>
+                        <div class="control">
+                            <label for="damping">Velocity Damping</label>
+                            <div class="value-editor"><input class="value-input" id="damping-value" type="number" min="0.8" max="0.99" step="0.01" value="0.95" aria-label="Velocity Damping Value"></div>
+                            <input type="range" id="damping" min="0.8" max="0.99" step="0.01" value="0.95">
+                        </div>
+                        <div class="control">
+                            <label for="sphere-boundary">Sphere Boundary</label>
+                            <div class="value-editor"><input class="value-input" id="sphere-boundary-value" type="number" min="0.5" max="2" step="0.05" value="1" aria-label="Sphere Boundary Value"></div>
+                            <input type="range" id="sphere-boundary" min="0.5" max="2" step="0.05" value="1">
+                        </div>
+
+                        <div class="control-cluster is-collapsed" data-collapsible-title="Bloom">
+                            <div class="collapsible-header">
+                                <h3>Bloom</h3>
+                                <div class="collapsible-header-actions">
+                                    <button class="section-reset" data-reset-section="bloom" title="Reset Bloom to defaults" aria-label="Reset Bloom to defaults" type="button">↺</button>
+                                    <button class="collapse-toggle" aria-controls="clusterBloom" aria-expanded="false" title="Expand Bloom" aria-label="Expand Bloom" type="button">+</button>
+                                </div>
+                            </div>
+                            <div class="collapsible-content" id="clusterBloom">
+                                <div class="control">
+                                    <label for="bloom-base">Base Strength</label>
+                                    <div class="value-editor"><input class="value-input" id="bloom-base-value" type="number" min="0" max="2" step="0.05" value="0.6" aria-label="Base Strength Value"></div>
+                                    <input type="range" id="bloom-base" min="0" max="2" step="0.05" value="0.6">
+                                </div>
+                                <div class="control">
+                                    <label for="bloom-gain">Audio Gain</label>
+                                    <div class="value-editor"><input class="value-input" id="bloom-gain-value" type="number" min="0" max="8" step="0.1" value="3.2" aria-label="Audio Gain Value"></div>
+                                    <input type="range" id="bloom-gain" min="0" max="8" step="0.1" value="3.2">
+                                </div>
+                                <div class="control">
+                                    <label for="bloom-radius">Radius</label>
+                                    <div class="value-editor"><input class="value-input" id="bloom-radius-value" type="number" min="0" max="1" step="0.05" value="0.45" aria-label="Radius Value"></div>
+                                    <input type="range" id="bloom-radius" min="0" max="1" step="0.05" value="0.45">
+                                </div>
+                                <div class="control">
+                                    <label for="bloom-threshold">Threshold</label>
+                                    <div class="value-editor"><input class="value-input" id="bloom-threshold-value" type="number" min="0" max="1" step="0.05" value="0.45" aria-label="Threshold Value"></div>
+                                    <input type="range" id="bloom-threshold" min="0" max="1" step="0.05" value="0.45">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== COLOR ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="Color">
+                    <div class="collapsible-header">
+                        <h2>Color</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="color" title="Reset Color to defaults" aria-label="Reset Color to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionColor" aria-expanded="false" title="Expand Color" aria-label="Expand Color" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionColor">
+                        <div class="cmap-section" style="margin-top:4px;padding-top:0;border-top:none;">
+                            <div class="cmap-toggle-row" id="cmap-toggle-row">
+                                <div class="section-title" style="margin:0;">Color Maps</div>
+                                <span class="cmap-arrow" id="cmap-arrow">▸</span>
+                            </div>
+                            <div class="cmap-body" id="cmap-body">
+                                <div class="cmap-grid" id="cmap-grid">
+                                    <div class="cmap-auto-row">
+                                        <button class="cmap-btn auto-active" data-cmap="auto" type="button">⟳ Auto-cycle</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="control">
+                            <label for="cycle-speed">Cycle Speed</label>
+                            <div class="value-editor"><input class="value-input" id="cycle-speed-value" type="number" min="0" max="4" step="0.05" value="1" aria-label="Cycle Speed Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                            <input type="range" id="cycle-speed" min="0" max="4" step="0.05" value="1">
+                        </div>
+                        <div class="control">
+                            <label for="brightness">Brightness</label>
+                            <div class="value-editor"><input class="value-input" id="brightness-value" type="number" min="10" max="250" step="1" value="100" aria-label="Brightness Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="brightness" min="10" max="250" step="1" value="100">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== EFFECTS ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="Effects">
+                    <div class="collapsible-header">
+                        <h2>Effects</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="effects" title="Reset Effects to defaults" aria-label="Reset Effects to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionEffects" aria-expanded="false" title="Expand Effects" aria-label="Expand Effects" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionEffects">
+                        <div class="control toggle-control">
+                            <label for="beat-flash-enabled">Beat Flash</label>
+                            <label class="switch" for="beat-flash-enabled" aria-label="Beat flash">
+                                <input class="switch-input" id="beat-flash-enabled" type="checkbox" role="switch" checked>
+                                <span class="switch-track" aria-hidden="true"></span>
+                            </label>
+                        </div>
+                        <div class="control">
+                            <label for="beat-flash-intensity">Flash Intensity</label>
+                            <div class="value-editor"><input class="value-input" id="beat-flash-intensity-value" type="number" min="0" max="200" step="5" value="100" aria-label="Flash Intensity Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="beat-flash-intensity" min="0" max="200" step="5" value="100">
+                        </div>
+                        <div class="control">
+                            <label for="beat-sensitivity">Beat Sensitivity</label>
+                            <div class="value-editor"><input class="value-input" id="beat-sensitivity-value" type="number" min="1.05" max="2.5" step="0.05" value="1.55" aria-label="Beat Sensitivity Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                            <input type="range" id="beat-sensitivity" min="1.05" max="2.5" step="0.05" value="1.55">
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== EXPORT ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="Export">
+                    <div class="collapsible-header">
+                        <h2>Export</h2>
+                        <div class="collapsible-header-actions">
+                            <button class="section-reset" data-reset-section="export" title="Reset Export to defaults" aria-label="Reset Export to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionExport" aria-expanded="false" title="Expand Export" aria-label="Expand Export" type="button">+</button>
+                        </div>
+                    </div>
+                    <div class="collapsible-content" id="sectionExport">
+                        <div class="control">
+                            <label for="export-file-name">Export File Name</label>
+                            <input class="text-input" id="export-file-name" type="text" maxlength="96" spellcheck="false" autocomplete="off" placeholder="Uses loaded audio file name" aria-describedby="export-file-name-hint">
+                            <div class="control-hint" id="export-file-name-hint">The file extension is added automatically.</div>
+                        </div>
+
+                        <div class="control-cluster" data-collapsible-title="Export Format">
+                            <div class="collapsible-header">
+                                <h3>Export Format</h3>
+                                <div class="collapsible-header-actions">
+                                    <button class="section-reset" data-reset-section="export-format" title="Reset Export Format to defaults" aria-label="Reset Export Format to defaults" type="button">↺</button>
+                                </div>
+                            </div>
+                            <div class="collapsible-content" id="clusterExportFormat">
+                                <div class="control">
+                                    <label for="export-resolution">Export Resolution</label>
+                                    <select id="export-resolution">
+                                        <option value="1080">1080</option>
+                                        <option value="2k">2K</option>
+                                        <option value="4k" selected>4K</option>
+                                    </select>
+                                </div>
+                                <div class="control">
+                                    <label for="video-file-type">Video File Type</label>
+                                    <select id="video-file-type">
+                                        <option value="mp4" selected>MP4</option>
+                                        <option value="mkv">MKV</option>
+                                    </select>
+                                </div>
+                                <div class="control">
+                                    <label for="video-frame-rate">Video Frame Rate</label>
+                                    <select id="video-frame-rate">
+                                        <option value="24">24 FPS</option>
+                                        <option value="30">30 FPS</option>
+                                        <option value="60" selected>60 FPS</option>
+                                    </select>
+                                </div>
+                                <div class="control">
+                                    <label for="video-bitrate">Video Bitrate</label>
+                                    <select id="video-bitrate">
+                                        <option value="6">6 Mbps</option>
+                                        <option value="10">10 Mbps</option>
+                                        <option value="16">16 Mbps</option>
+                                        <option value="24" selected>24 Mbps</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="export-estimate" aria-label="Export estimate">
+                            <div><span>Duration</span><strong id="export-estimate-duration">—</strong></div>
+                            <div><span>Estimated Size</span><strong id="export-estimate-size">—</strong></div>
+                            <div><span>Estimated Time</span><strong id="export-estimate-time">—</strong></div>
+                        </div>
+
+                        <div class="button-row">
+                            <button class="video-export-button" id="export-video" type="button">Export Video</button>
+                        </div>
+                        <div class="button-row">
+                            <button class="secondary" id="export-png" type="button">Export PNG</button>
+                            <button class="secondary" id="export-json" type="button">Export JSON</button>
+                        </div>
+                        <div class="button-row">
+                            <button class="secondary" id="import-json" type="button">Import JSON</button>
+                            <input id="import-json-file" type="file" accept="application/json,.json" hidden>
+                        </div>
+                        <div class="status-line" data-state="idle" id="settings-status" aria-live="polite">Settings import validates compatible JSON presets.</div>
+                        <div class="status-line" data-state="idle" id="export-status" aria-live="polite">MP4 export requires a loaded audio file and a Chromium browser with WebCodecs.</div>
+                        <div class="video-export-progress-wrap" id="export-progress-wrap" hidden>
+                            <progress id="export-progress" max="100" value="0" aria-label="Video export progress"></progress>
+                            <span class="progress-text" id="export-progress-text">0%</span>
+                        </div>
+                        <div class="export-progress-details" aria-live="polite">
+                            <div><span>Stage</span><strong id="export-progress-stage">Idle</strong></div>
+                            <div><span>Time</span><strong id="export-progress-time">—</strong></div>
+                            <div><span>Frames</span><strong id="export-progress-frames">—</strong></div>
+                            <div><span>ETA</span><strong id="export-progress-eta">—</strong></div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="button-row history-buttons">
+                    <button id="undo-btn" class="secondary" type="button" disabled>Undo</button>
+                    <button id="redo-btn" class="secondary" type="button" disabled>Redo</button>
+                </div>
+
+                <!-- Reset to defaults -->
+                <button id="reset-btn" class="primary" type="button">Reset to Defaults</button>
+
+                <div class="keyboard-shortcuts">
+                    <div class="shortcuts-title">Keyboard Shortcuts</div>
+                    <div class="shortcut-item">
+                        <div class="shortcut-key">SPACE</div>
+                        <div class="shortcut-desc">Play / Pause</div>
+                    </div>
+                    <div class="shortcut-item">
+                        <div class="shortcut-key">F</div>
+                        <div class="shortcut-desc">Fullscreen</div>
+                    </div>
+                    <div class="shortcut-item">
+                        <div class="shortcut-key">H</div>
+                        <div class="shortcut-desc">Hide UI</div>
+                    </div>
+                    <div class="shortcut-item">
+                        <div class="shortcut-key">L</div>
+                        <div class="shortcut-desc">Loop Editor</div>
+                    </div>
+                    <div class="shortcut-item">
+                        <div class="shortcut-key">CTRL/CMD+Z</div>
+                        <div class="shortcut-desc">Undo</div>
+                    </div>
+                    <div class="shortcut-item">
+                        <div class="shortcut-key">SHIFT+Z</div>
+                        <div class="shortcut-desc">Redo</div>
+                    </div>
+                </div>
+
+            </div> <!-- End controls-content -->
+        </div>
+    </div>
+
+    <div id="beat-flash"></div>
+
+    <div id="drag-overlay" aria-hidden="true">
+        <div class="drag-icon">🎵</div>
+        <div class="drag-label">Drop audio to load</div>
+        <div class="drag-sub" id="drag-file-name">mp3 · wav · m4a · ogg · flac · aac</div>
+    </div>
+
+    <div id="export-overlay">
+        <div class="export-overlay-card">
+            <div class="export-overlay-title">Exporting Video</div>
+            <div class="video-export-progress-wrap">
+                <progress id="export-overlay-progress" max="100" value="0" aria-label="Video export progress"></progress>
+                <span class="progress-text" id="export-overlay-progress-text">0%</span>
+            </div>
+            <div class="export-overlay-detail" id="export-overlay-detail">Preparing encoder · 0%</div>
+            <div class="export-overlay-stats">
+                <div><span>Stage</span><strong id="export-overlay-stage">Preparing</strong></div>
+                <div><span>Time</span><strong id="export-overlay-time">—</strong></div>
+                <div><span>Frames</span><strong id="export-overlay-frames">—</strong></div>
+                <div><span>ETA</span><strong id="export-overlay-eta">—</strong></div>
+            </div>
+            <button class="secondary" id="export-cancel" type="button">Cancel Export</button>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
