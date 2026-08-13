@@ -16,27 +16,6 @@ function titleCase(value) {
 }
 
 
-const SIMULATION_LABELS = Object.freeze({
-  flow: "Flow",
-  flock: "Flock",
-  swarm: "Swarm",
-  vortex: "Vortex",
-  orbit: "Orbit",
-  liquid: "Liquid",
-  sphereRings: "Concentric Sphere",
-  lorenz: "Lorenz",
-  rossler: "Rössler",
-  halvorsen: "Halvorsen",
-  aizawa: "Aizawa",
-  thomas: "Thomas",
-  dadras: "Dadras",
-  morph: "Morph"
-});
-
-function simulationLabel(value) {
-  return SIMULATION_LABELS[value] || titleCase(value);
-}
-
 function getViewportLabel() {
   return viewportPresets[state.viewportPreset]?.label || "Fill Window";
 }
@@ -108,14 +87,14 @@ function drawBottomRightStatus(context, width, height, contentInset, scale, opac
   const barHeight = Math.max(2, 3.5 * scale);
   const energy = Math.max(0, Math.min(1, Number(state.spectralEnergy) || 0));
   const centroid = Math.max(0, Math.min(1, Number(state.spectralCentroid) || 0.5));
-  const particleLoad = Math.max(0, Math.min(1,
-    (Number(state.activeCount) || 0) / Math.max(1, Number(state.maxParticles) || 1)
+  const ringResponse = Math.max(0, Math.min(1,
+    (Number(state.lowFreqMagnitude) || 0) * (Number(state.reactivity) || 100) / 100
   ));
 
   const rows = [
     ["MASTER ENERGY", energy, `${Math.round(energy * 100)}%`],
     ["CENTROID", centroid, `${Math.round(centroid * 100)}%`],
-    ["PARTICLE LOAD", particleLoad, `${Math.round(state.activeCount || 0).toLocaleString()}`]
+    ["RING RESPONSE", ringResponse, `${Math.round(ringResponse * 100)}%`]
   ];
 
   context.save();
@@ -151,7 +130,7 @@ function drawBottomRightStatus(context, width, height, contentInset, scale, opac
   context.textAlign = "right";
   context.fillStyle = "rgba(255,255,255,0.48)";
   context.fillText(
-    `FFT ${Number(state.fftSize).toLocaleString()}  /  SIZE ${Math.round(state.visualizationSize)}%`,
+    `FFT ${Number(state.fftSize).toLocaleString()}  /  SIZE ${Math.round(state.sphereSize)}%`,
     right,
     footerTop
   );
@@ -201,10 +180,10 @@ export function drawHud(context, width, height) {
     : 0;
   const duration = state.decodedAudioBuffer?.duration || audio.duration || 0;
   const leftLines = [
-    "PARTICLE VISUALIZER / SYSTEM HUD",
+    "CONCENTRIC SPHERE VISUALIZER / SYSTEM HUD",
     fileName,
     `${state.isExportingVideo ? "EXPORT" : state.isPlaying ? "PLAY" : "PAUSE"}  ${formatTime(current)} / ${formatTime(duration)}`,
-    `SIMULATION ${simulationLabel(state.boidType)}  /  CAMERA ${titleCase(state.cameraPreset)}`,
+    `RINGS ${Math.round(state.ringCount)}  /  CAMERA ${titleCase(state.cameraPreset)}`,
     `AMPLITUDE ${titleCase(state.amplitudeMode)}  /  ${getViewportLabel()}`
   ];
 
@@ -219,7 +198,7 @@ export function drawHud(context, width, height) {
     `${Math.round(state.previewFps || 0)} FPS`,
     `AZ ${Math.round(state.cameraAzimuth)}° / EL ${Math.round(state.cameraElevation)}°`,
     `CENTROID ${Math.round((state.spectralCentroid || 0.5) * 100)}%`,
-    `PARTICLES ${Math.round(state.activeCount || 0).toLocaleString()}`
+    `RADIUS ${Number(state.sphereRadius).toFixed(2)}×`
   ];
   rightLines.forEach((line, index) => {
     context.fillStyle = index === 0 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.66)";

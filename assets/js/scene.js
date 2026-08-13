@@ -184,6 +184,7 @@ export const particleMaterial = new THREE.PointsMaterial({
 
 export const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
 particleSystem.layers.enable(BLOOM_LAYER);
+particleSystem.visible = false;
 scene.add(particleSystem);
 
 /* ---------------------------------------------------------------------------
@@ -235,7 +236,7 @@ scene.add(trailSystem);
    cloud. Each ring is a complete circle, and the stack of circular
    cross-sections forms the three-dimensional sphere.
 --------------------------------------------------------------------------- */
-export const SPHERE_RING_COUNT = 36;
+export const SPHERE_RING_COUNT = 72;
 export const SPHERE_RING_SEGMENTS = 128;
 const SPHERE_RING_VERTEX_CAPACITY =
   SPHERE_RING_COUNT * SPHERE_RING_SEGMENTS * 2;
@@ -259,7 +260,7 @@ sphereRingGeometry.setDrawRange(0, 0);
 export const sphereRingMaterial = new THREE.LineBasicMaterial({
   vertexColors: true,
   transparent: true,
-  opacity: defaults.particleOpacity / 100,
+  opacity: defaults.ringOpacity / 100,
   blending: THREE.AdditiveBlending,
   depthWrite: false
 });

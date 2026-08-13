@@ -1,7 +1,6 @@
 /** quality.js — preview performance presets and conservative Auto mode. */
 import { QUALITY_PRESETS } from "./config.js";
 import { elements, state } from "./core.js";
-import { setControlValue } from "./controls.js";
 import { fitViewport } from "./viewport.js";
 
 const AUTO_LEVELS = ["performance", "balanced", "high"];
@@ -15,8 +14,6 @@ function applyPresetValues(name, preservePresetName = false) {
   if (!preset) return;
   state.qualityPresetApplying = true;
   try {
-    setControlValue("minParticles", preset.minParticles);
-    setControlValue("maxParticles", preset.maxParticles);
     state.renderPixelRatioLimit = preset.renderPixelRatioLimit;
     fitViewport();
   } finally {

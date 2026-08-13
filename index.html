@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Particle Visualizer</title>
+    <title>Concentric Sphere Visualizer</title>
     <link rel="icon" href="data:,">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +26,7 @@
 
             <!-- Title row with minimize -->
             <div class="header-container">
-                <div class="app-title">Particle Visualizer</div>
+                <div class="app-title">Concentric Sphere Visualizer</div>
                 <button class="minimize-btn" id="minimize-btn" title="Collapse panel" type="button">−</button>
             </div>
 
@@ -335,190 +335,50 @@
                     </div>
                 </section>
 
-                <!-- ===================== PARTICLES ===================== -->
-                <section class="section is-collapsed" data-collapsible-title="Particles">
+                <!-- ===================== CONCENTRIC SPHERE ===================== -->
+                <section class="section is-collapsed" data-collapsible-title="Concentric Sphere">
                     <div class="collapsible-header">
-                        <h2>Particles</h2>
+                        <h2>Concentric Sphere</h2>
                         <div class="collapsible-header-actions">
-                            <button class="section-reset" data-reset-section="particles" title="Reset Particles to defaults" aria-label="Reset Particles to defaults" type="button">↺</button>
-                            <button class="collapse-toggle" aria-controls="sectionParticles" aria-expanded="false" title="Expand Particles" aria-label="Expand Particles" type="button">+</button>
+                            <button class="section-reset" data-reset-section="sphere" title="Reset Concentric Sphere to defaults" aria-label="Reset Concentric Sphere to defaults" type="button">↺</button>
+                            <button class="collapse-toggle" aria-controls="sectionSphere" aria-expanded="false" title="Expand Concentric Sphere" aria-label="Expand Concentric Sphere" type="button">+</button>
                         </div>
                     </div>
-                    <div class="collapsible-content" id="sectionParticles">
+                    <div class="collapsible-content" id="sectionSphere">
                         <div class="control">
-                            <label for="boid-type">Simulation Type</label>
-                            <select id="boid-type">
-                                <option value="flow">Flow — Original</option>
-                                <option value="flock">Flock</option>
-                                <option value="swarm">Swarm</option>
-                                <option value="vortex">Vortex</option>
-                                <option value="orbit">Orbit</option>
-                                <option value="liquid">Liquid</option>
-                                <option value="sphereRings" selected>Concentric Sphere</option>
-                                <option value="lorenz">Attractor — Lorenz</option>
-                                <option value="rossler">Attractor — Rössler</option>
-                                <option value="halvorsen">Attractor — Halvorsen</option>
-                                <option value="aizawa">Attractor — Aizawa</option>
-                                <option value="thomas">Attractor — Thomas</option>
-                                <option value="dadras">Attractor — Dadras</option>
-                                <option value="morph">Morph</option>
-                            </select>
-                        </div>
-                        <div class="control" id="morph-scope-control" hidden>
-                            <label for="morph-scope">Morph Between</label>
-                            <select id="morph-scope">
-                                <option value="all" selected>All Simulation Types</option>
-                                <option value="boids">Boid Simulations Only</option>
-                                <option value="attractors">Chaotic Attractors Only</option>
-                            </select>
-                        </div>
-                        <div class="control">
-                            <label for="attractor-color-source">Color Source</label>
-                            <select id="attractor-color-source">
-                                <option value="speed" selected>Speed — Trajectory Velocity</option>
-                                <option value="lobe">Lobe — Wing Membership</option>
-                                <option value="radius">Radius — Distance From Center</option>
-                            </select>
-                        </div>
-                        <div class="control">
-                            <label for="reactivity-slider">Reactivity</label>
-                            <div class="value-editor"><input class="value-input" id="reactivity-value" type="number" min="10" max="300" step="1" value="100" aria-label="Reactivity Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <label for="reactivity-slider">Audio Reactivity</label>
+                            <div class="value-editor"><input class="value-input" id="reactivity-value" type="number" min="10" max="300" step="1" value="100" aria-label="Audio Reactivity Value"><span class="value-suffix" aria-hidden="true">%</span></div>
                             <input type="range" id="reactivity-slider" min="10" max="300" step="1" value="100">
                         </div>
-                        <div class="control-cluster is-collapsed" data-collapsible-title="Simulation Types">
-                            <div class="collapsible-header">
-                                <h3>Simulation Types</h3>
-                                <div class="collapsible-header-actions">
-                                    <button class="section-reset" data-reset-section="boids" title="Reset Simulation Types to defaults" aria-label="Reset Simulation Types to defaults" type="button">↺</button>
-                                    <button class="collapse-toggle" aria-controls="clusterBoids" aria-expanded="false" title="Expand Simulation Types" aria-label="Expand Simulation Types" type="button">+</button>
-                                </div>
-                            </div>
-                            <div class="collapsible-content" id="clusterBoids">
-                                <div class="control" id="morph-speed-control" hidden>
-                                    <label for="morph-speed">Morph Speed</label>
-                                    <div class="value-editor"><input class="value-input" id="morph-speed-value" type="number" min="0.1" max="3" step="0.05" value="1" aria-label="Morph Speed Value"><span class="value-suffix" aria-hidden="true">×</span></div>
-                                    <input type="range" id="morph-speed" min="0.1" max="3" step="0.05" value="1">
-                                </div>
-                                <div class="control">
-                                    <label for="movement-speed">Movement Speed</label>
-                                    <div class="value-editor"><input class="value-input" id="movement-speed-value" type="number" min="0.1" max="3" step="0.05" value="1" aria-label="Movement Speed Value"><span class="value-suffix" aria-hidden="true">×</span></div>
-                                    <input type="range" id="movement-speed" min="0.1" max="3" step="0.05" value="1">
-                                </div>
-                                <div class="control">
-                                    <label for="movement-amount">Movement Amount</label>
-                                    <div class="value-editor"><input class="value-input" id="movement-amount-value" type="number" min="0" max="200" step="5" value="100" aria-label="Movement Amount Value"><span class="value-suffix" aria-hidden="true">%</span></div>
-                                    <input type="range" id="movement-amount" min="0" max="200" step="5" value="100">
-                                </div>
-                                <div class="control">
-                                    <label for="boid-alignment">Alignment</label>
-                                    <div class="value-editor"><input class="value-input" id="boid-alignment-value" type="number" min="0" max="200" step="5" value="100" aria-label="Boid Alignment Value"><span class="value-suffix" aria-hidden="true">%</span></div>
-                                    <input type="range" id="boid-alignment" min="0" max="200" step="5" value="100">
-                                </div>
-                                <div class="control">
-                                    <label for="boid-cohesion">Cohesion</label>
-                                    <div class="value-editor"><input class="value-input" id="boid-cohesion-value" type="number" min="0" max="200" step="5" value="100" aria-label="Boid Cohesion Value"><span class="value-suffix" aria-hidden="true">%</span></div>
-                                    <input type="range" id="boid-cohesion" min="0" max="200" step="5" value="100">
-                                </div>
-                                <div class="control">
-                                    <label for="boid-separation">Separation</label>
-                                    <div class="value-editor"><input class="value-input" id="boid-separation-value" type="number" min="0" max="200" step="5" value="100" aria-label="Boid Separation Value"><span class="value-suffix" aria-hidden="true">%</span></div>
-                                    <input type="range" id="boid-separation" min="0" max="200" step="5" value="100">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="control-cluster is-collapsed" data-collapsible-title="Chaotic Attractors">
-                            <div class="collapsible-header">
-                                <h3>Chaotic Attractors</h3>
-                                <div class="collapsible-header-actions">
-                                    <button class="section-reset" data-reset-section="attractors" title="Reset Chaotic Attractors to defaults" aria-label="Reset Chaotic Attractors to defaults" type="button">↺</button>
-                                    <button class="collapse-toggle" aria-controls="clusterAttractors" aria-expanded="false" title="Expand Chaotic Attractors" aria-label="Expand Chaotic Attractors" type="button">+</button>
-                                </div>
-                            </div>
-                            <div class="collapsible-content" id="clusterAttractors">
-                                <div class="control">
-                                    <label for="traversal-floor">Traversal Floor</label>
-                                    <div class="value-editor"><input class="value-input" id="traversal-floor-value" type="number" min="0" max="2" step="0.05" value="0.25" aria-label="Traversal Floor Value"><span class="value-suffix" aria-hidden="true">×</span></div>
-                                    <input type="range" id="traversal-floor" min="0" max="2" step="0.05" value="0.25">
-                                </div>
-                                <div class="control">
-                                    <label for="traversal-range">Traversal Range</label>
-                                    <div class="value-editor"><input class="value-input" id="traversal-range-value" type="number" min="0" max="16" step="0.25" value="8" aria-label="Traversal Range Value"><span class="value-suffix" aria-hidden="true">×</span></div>
-                                    <input type="range" id="traversal-range" min="0" max="16" step="0.25" value="8">
-                                </div>
-                                <div class="control">
-                                    <label for="traversal-curve">Traversal Curve</label>
-                                    <div class="value-editor"><input class="value-input" id="traversal-curve-value" type="number" min="0.5" max="4" step="0.1" value="1.8" aria-label="Traversal Curve Value"></div>
-                                    <input type="range" id="traversal-curve" min="0.5" max="4" step="0.1" value="1.8">
-                                </div>
-                                <div class="control">
-                                    <label for="beat-traversal-boost">Beat Impulse</label>
-                                    <div class="value-editor"><input class="value-input" id="beat-traversal-boost-value" type="number" min="0" max="300" step="5" value="60" aria-label="Beat Impulse Value"><span class="value-suffix" aria-hidden="true">%</span></div>
-                                    <input type="range" id="beat-traversal-boost" min="0" max="300" step="5" value="60">
-                                </div>
-                                <div class="control toggle-control">
-                                    <label for="attractor-trails">Trails</label>
-                                    <label class="switch" for="attractor-trails" aria-label="Attractor trails">
-                                        <input class="switch-input" id="attractor-trails" type="checkbox" role="switch" checked>
-                                        <span class="switch-track" aria-hidden="true"></span>
-                                    </label>
-                                </div>
-                                <div class="control">
-                                    <label for="trail-length">Trail Length</label>
-                                    <div class="value-editor"><input class="value-input" id="trail-length-value" type="number" min="2" max="48" step="1" value="24" aria-label="Trail Length Value"></div>
-                                    <input type="range" id="trail-length" min="2" max="48" step="1" value="24">
-                                </div>
-                                <div class="control">
-                                    <label for="trail-particles">Trail Particles</label>
-                                    <div class="value-editor"><input class="value-input" id="trail-particles-value" type="number" min="200" max="4000" step="100" value="1500" aria-label="Trail Particles Value"></div>
-                                    <input type="range" id="trail-particles" min="200" max="4000" step="100" value="1500">
-                                </div>
-                                <div class="control">
-                                    <label for="trail-opacity">Trail Opacity</label>
-                                    <div class="value-editor"><input class="value-input" id="trail-opacity-value" type="number" min="0" max="100" step="1" value="55" aria-label="Trail Opacity Value"><span class="value-suffix" aria-hidden="true">%</span></div>
-                                    <input type="range" id="trail-opacity" min="0" max="100" step="1" value="55">
-                                </div>
-                            </div>
+                        <div class="control">
+                            <label for="ring-count">Ring Count</label>
+                            <div class="value-editor"><input class="value-input" id="ring-count-value" type="number" min="8" max="72" step="1" value="36" aria-label="Ring Count Value"></div>
+                            <input type="range" id="ring-count" min="8" max="72" step="1" value="36">
                         </div>
                         <div class="control">
-                            <label for="visualization-size">Visualization Size</label>
-                            <div class="value-editor"><input class="value-input" id="visualization-size-value" type="number" min="25" max="250" step="5" value="100" aria-label="Visualization Size Value"><span class="value-suffix" aria-hidden="true">%</span></div>
-                            <input type="range" id="visualization-size" min="25" max="250" step="5" value="100">
+                            <label for="sphere-radius">Sphere Radius</label>
+                            <div class="value-editor"><input class="value-input" id="sphere-radius-value" type="number" min="0.5" max="2" step="0.05" value="1" aria-label="Sphere Radius Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                            <input type="range" id="sphere-radius" min="0.5" max="2" step="0.05" value="1">
                         </div>
                         <div class="control">
-                            <label for="min-particles">Minimum Particles</label>
-                            <div class="value-editor"><input class="value-input" id="min-particles-value" type="number" min="200" max="8000" step="100" value="800" aria-label="Minimum Particles Value"></div>
-                            <input type="range" id="min-particles" min="200" max="8000" step="100" value="800">
+                            <label for="sphere-size">Visualization Size</label>
+                            <div class="value-editor"><input class="value-input" id="sphere-size-value" type="number" min="25" max="200" step="5" value="100" aria-label="Visualization Size Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="sphere-size" min="25" max="200" step="5" value="100">
                         </div>
                         <div class="control">
-                            <label for="max-particles">Maximum Particles</label>
-                            <div class="value-editor"><input class="value-input" id="max-particles-value" type="number" min="2000" max="40000" step="500" value="20000" aria-label="Maximum Particles Value"></div>
-                            <input type="range" id="max-particles" min="2000" max="40000" step="500" value="20000">
+                            <label for="ring-opacity">Ring Opacity</label>
+                            <div class="value-editor"><input class="value-input" id="ring-opacity-value" type="number" min="10" max="100" step="1" value="80" aria-label="Ring Opacity Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="ring-opacity" min="10" max="100" step="1" value="80">
                         </div>
                         <div class="control">
-                            <label for="particle-size">Particle Size</label>
-                            <div class="value-editor"><input class="value-input" id="particle-size-value" type="number" min="0.02" max="0.6" step="0.01" value="0.15" aria-label="Particle Size Value"></div>
-                            <input type="range" id="particle-size" min="0.02" max="0.6" step="0.01" value="0.15">
+                            <label for="rotation-speed">Rotation Speed</label>
+                            <div class="value-editor"><input class="value-input" id="rotation-speed-value" type="number" min="0" max="3" step="0.05" value="1" aria-label="Rotation Speed Value"><span class="value-suffix" aria-hidden="true">×</span></div>
+                            <input type="range" id="rotation-speed" min="0" max="3" step="0.05" value="1">
                         </div>
                         <div class="control">
-                            <label for="particle-opacity">Particle Opacity</label>
-                            <div class="value-editor"><input class="value-input" id="particle-opacity-value" type="number" min="10" max="100" step="1" value="80" aria-label="Particle Opacity Value"><span class="value-suffix" aria-hidden="true">%</span></div>
-                            <input type="range" id="particle-opacity" min="10" max="100" step="1" value="80">
-                        </div>
-                        <div class="control">
-                            <label for="noise-scale">Noise Scale</label>
-                            <div class="value-editor"><input class="value-input" id="noise-scale-value" type="number" min="0.1" max="3" step="0.05" value="1" aria-label="Noise Scale Value"><span class="value-suffix" aria-hidden="true">×</span></div>
-                            <input type="range" id="noise-scale" min="0.1" max="3" step="0.05" value="1">
-                        </div>
-                        <div class="control">
-                            <label for="damping">Velocity Damping</label>
-                            <div class="value-editor"><input class="value-input" id="damping-value" type="number" min="0.8" max="0.99" step="0.01" value="0.95" aria-label="Velocity Damping Value"></div>
-                            <input type="range" id="damping" min="0.8" max="0.99" step="0.01" value="0.95">
-                        </div>
-                        <div class="control">
-                            <label for="sphere-boundary">Sphere Boundary</label>
-                            <div class="value-editor"><input class="value-input" id="sphere-boundary-value" type="number" min="0.5" max="2" step="0.05" value="1" aria-label="Sphere Boundary Value"></div>
-                            <input type="range" id="sphere-boundary" min="0.5" max="2" step="0.05" value="1">
+                            <label for="rotation-amount">Rotation Amount</label>
+                            <div class="value-editor"><input class="value-input" id="rotation-amount-value" type="number" min="0" max="200" step="5" value="100" aria-label="Rotation Amount Value"><span class="value-suffix" aria-hidden="true">%</span></div>
+                            <input type="range" id="rotation-amount" min="0" max="200" step="5" value="100">
                         </div>
 
                         <div class="control-cluster is-collapsed" data-collapsible-title="Bloom">

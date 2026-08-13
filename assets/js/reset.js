@@ -10,7 +10,7 @@ import {
   updateLoopSelectionUi
 } from "./loop.js";
 import { applyVolume, updateLoopButtonState } from "./playback.js";
-import { reseedForCurrentMode, resetSimulation } from "./render.js";
+import { resetSimulation } from "./render.js";
 import { updateVideoExportFormatUi } from "./export.js";
 import { fitViewport } from "./viewport.js";
 import { beginHistory, commitHistory } from "./history.js";
@@ -20,7 +20,7 @@ const sectionKeys = {
   audio: ["fftSize", "smoothing", "amplitudeMode", "inputGain", "noiseFloor", "dynamicRange"],
   viewport: ["viewportPreset"],
   hud: ["hudEnabled", "hudOpacity", "hudScale"],
-  performance: ["qualityPreset", "renderPixelRatioLimit", "minParticles", "maxParticles"],
+  performance: ["qualityPreset", "renderPixelRatioLimit"],
   camera: [
     "cameraPreset",
     "cameraSpeed",
@@ -29,54 +29,14 @@ const sectionKeys = {
     "cameraElevation",
     "cameraAzimuth"
   ],
-  boids: [
-    "boidType",
-    "morphScope",
-    "morphSpeed",
-    "movementSpeed",
-    "movementAmount",
-    "boidAlignment",
-    "boidCohesion",
-    "boidSeparation"
-  ],
-  attractors: [
-    "attractorColorSource",
-    "traversalFloor",
-    "traversalRange",
-    "traversalCurve",
-    "beatTraversalBoost",
-    "attractorTrails",
-    "trailLength",
-    "trailParticles",
-    "trailOpacity"
-  ],
-  particles: [
+  sphere: [
     "reactivity",
-    "boidType",
-    "morphScope",
-    "morphSpeed",
-    "movementSpeed",
-    "movementAmount",
-    "boidAlignment",
-    "boidCohesion",
-    "boidSeparation",
-    "visualizationSize",
-    "minParticles",
-    "maxParticles",
-    "particleSize",
-    "particleOpacity",
-    "noiseScale",
-    "damping",
-    "sphereBoundary",
-    "attractorColorSource",
-    "traversalFloor",
-    "traversalRange",
-    "traversalCurve",
-    "beatTraversalBoost",
-    "attractorTrails",
-    "trailLength",
-    "trailParticles",
-    "trailOpacity"
+    "ringCount",
+    "sphereRadius",
+    "sphereSize",
+    "ringOpacity",
+    "rotationSpeed",
+    "rotationAmount"
   ],
   bloom: ["bloomBase", "bloomGain", "bloomRadius", "bloomThreshold"],
   color: ["cycleSpeed", "brightness"],
@@ -150,9 +110,6 @@ export function resetSection(section, { record = true } = {}) {
       applyVolume();
       updateLoopButtonState();
     }
-    if (section === "particles") {
-      reseedForCurrentMode();
-    }
     if (section === "performance") {
       state.renderPixelRatioLimit = defaults.renderPixelRatioLimit;
       fitViewport();
@@ -174,7 +131,6 @@ export function resetAll() {
     elements.exportFileName.value = "";
     applyVolume();
     updateLoopButtonState();
-    reseedForCurrentMode();
     resetSimulation();
   } finally {
     commitHistory("Reset all");

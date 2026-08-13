@@ -36,7 +36,6 @@ import {
 } from "./history.js";
 import {
   applyQualityPreset,
-  markQualityCustom,
   updateAutoQuality,
   updateQualityStatus
 } from "./quality.js";
@@ -61,7 +60,7 @@ import {
   updateLoopButtonState,
   updateTransportUi
 } from "./playback.js";
-import { renderFrame, reseedForCurrentMode, resetSimulation } from "./render.js";
+import { renderFrame, resetSimulation } from "./render.js";
 import { initializeSectionResets, resetAll } from "./reset.js";
 import { clamp } from "./utils.js";
 import { fitViewport } from "./viewport.js";
@@ -176,65 +175,14 @@ function bindControls() {
   // Performance
   bindSelect(elements.qualityPreset, "qualityPreset", applyQualityPreset);
 
-  // Particles
+  // Concentric sphere
   bindRange(elements.reactivity, elements.reactivityValue, "reactivity");
-  const attractorSimulationTypes = new Set([
-    "lorenz", "rossler", "halvorsen", "aizawa", "thomas", "dadras"
-  ]);
-  const isAttractorSelection = () =>
-    attractorSimulationTypes.has(state.boidType) ||
-    (state.boidType === "morph" && state.morphScope === "attractors");
-  const updateMorphControlsVisibility = () => {
-    const isMorph = state.boidType === "morph";
-    elements.morphScopeControl.hidden = !isMorph;
-    elements.morphSpeedControl.hidden = !isMorph;
-  };
-  bindSelect(elements.boidType, "boidType", () => {
-    updateMorphControlsVisibility();
-    // Attractors need a formed manifold and Concentric Sphere needs its ring
-    // layout immediately, even while playback is paused. Other boid modes keep
-    // their positions so switching between them stays continuous.
-    if (isAttractorSelection() || state.boidType === "sphereRings") {
-      reseedForCurrentMode();
-    }
-  });
-  bindSelect(elements.morphScope, "morphScope", () => {
-    if (isAttractorSelection()) reseedForCurrentMode();
-  });
-  bindRange(elements.morphSpeed, elements.morphSpeedValue, "morphSpeed");
-  updateMorphControlsVisibility();
-  bindRange(elements.movementSpeed, elements.movementSpeedValue, "movementSpeed");
-  bindRange(elements.movementAmount, elements.movementAmountValue, "movementAmount");
-  bindRange(elements.boidAlignment, elements.boidAlignmentValue, "boidAlignment");
-  bindRange(elements.boidCohesion, elements.boidCohesionValue, "boidCohesion");
-  bindRange(elements.boidSeparation, elements.boidSeparationValue, "boidSeparation");
-  bindRange(elements.visualizationSize, elements.visualizationSizeValue, "visualizationSize");
-  bindRange(elements.minParticles, elements.minParticlesValue, "minParticles", (value) => {
-    if (value > state.maxParticles) setControlValue("maxParticles", value);
-    markQualityCustom();
-  });
-  bindRange(elements.maxParticles, elements.maxParticlesValue, "maxParticles", (value) => {
-    if (value < state.minParticles) setControlValue("minParticles", value);
-    markQualityCustom();
-  });
-  bindRange(elements.particleSize, elements.particleSizeValue, "particleSize");
-  bindRange(elements.particleOpacity, elements.particleOpacityValue, "particleOpacity");
-  bindRange(elements.noiseScale, elements.noiseScaleValue, "noiseScale");
-  bindRange(elements.damping, elements.dampingValue, "damping");
-  bindRange(elements.sphereBoundary, elements.sphereBoundaryValue, "sphereBoundary", () => {
-    reseedForCurrentMode();
-  });
-
-  // Chaotic attractors
-  bindSelect(elements.attractorColorSource, "attractorColorSource");
-  bindRange(elements.traversalFloor, elements.traversalFloorValue, "traversalFloor");
-  bindRange(elements.traversalRange, elements.traversalRangeValue, "traversalRange");
-  bindRange(elements.traversalCurve, elements.traversalCurveValue, "traversalCurve");
-  bindRange(elements.beatTraversalBoost, elements.beatTraversalBoostValue, "beatTraversalBoost");
-  bindToggle(elements.attractorTrails, "attractorTrails");
-  bindRange(elements.trailLength, elements.trailLengthValue, "trailLength");
-  bindRange(elements.trailParticles, elements.trailParticlesValue, "trailParticles");
-  bindRange(elements.trailOpacity, elements.trailOpacityValue, "trailOpacity");
+  bindRange(elements.ringCount, elements.ringCountValue, "ringCount");
+  bindRange(elements.sphereRadius, elements.sphereRadiusValue, "sphereRadius");
+  bindRange(elements.sphereSize, elements.sphereSizeValue, "sphereSize");
+  bindRange(elements.ringOpacity, elements.ringOpacityValue, "ringOpacity");
+  bindRange(elements.rotationSpeed, elements.rotationSpeedValue, "rotationSpeed");
+  bindRange(elements.rotationAmount, elements.rotationAmountValue, "rotationAmount");
 
   // Bloom
   bindRange(elements.bloomBase, elements.bloomBaseValue, "bloomBase");
@@ -619,4 +567,4 @@ function boot() {
 boot();
 
 // Keep the defaults reachable for debugging without exposing internals.
-window.__particleVisualizerDefaults = defaults;
+window.__concentricSphereVisualizerDefaults = defaults;

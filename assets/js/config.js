@@ -1,7 +1,6 @@
 /**
- * config.js — immutable defaults, colormaps and engine constants.
- * Every value here matches the original single-file build, so the visualizer
- * looks identical until a control is moved.
+ * config.js — immutable defaults, colormaps and engine constants for the
+ * standalone Concentric Sphere visualizer.
  */
 
 export const defaults = Object.freeze({
@@ -38,8 +37,17 @@ export const defaults = Object.freeze({
   qualityPreset: "custom",
   renderPixelRatioLimit: 2,
 
-  // Particles
+  // Concentric sphere
   reactivity: 100,
+  ringCount: 36,
+  sphereRadius: 1.0,
+  sphereSize: 100,
+  ringOpacity: 80,
+  rotationSpeed: 1.0,
+  rotationAmount: 100,
+
+  // Legacy simulation internals retained only so inherited engine code remains
+  // inert and compatible. They are not exposed, persisted, or controlled by UI.
   boidType: "sphereRings",
   morphScope: "all",
   morphSpeed: 1.0,
@@ -57,7 +65,7 @@ export const defaults = Object.freeze({
   damping: 0.95,
   sphereBoundary: 1.0,
 
-  // Chaotic attractors
+  // Legacy attractor internals (not exposed by this project)
   attractorColorSource: "speed",
   traversalFloor: 0.25,
   traversalRange: 8.0,
@@ -86,14 +94,14 @@ export const defaults = Object.freeze({
 });
 
 
-export const SETTINGS_APP = "Particle Visualizer";
-export const SETTINGS_VERSION = 1;
+export const SETTINGS_APP = "Concentric Sphere Visualizer";
+export const SETTINGS_VERSION = 2;
 
 export const QUALITY_PRESETS = Object.freeze({
-  performance: { minParticles: 400, maxParticles: 8000, renderPixelRatioLimit: 1 },
-  balanced: { minParticles: 800, maxParticles: 16000, renderPixelRatioLimit: 1.5 },
-  high: { minParticles: 800, maxParticles: 24000, renderPixelRatioLimit: 2 },
-  maximum: { minParticles: 1200, maxParticles: 40000, renderPixelRatioLimit: 2.5 }
+  performance: { renderPixelRatioLimit: 1 },
+  balanced: { renderPixelRatioLimit: 1.5 },
+  high: { renderPixelRatioLimit: 2 },
+  maximum: { renderPixelRatioLimit: 2.5 }
 });
 
 export const PERSISTED_SETTING_KEYS = Object.freeze([
@@ -103,11 +111,8 @@ export const PERSISTED_SETTING_KEYS = Object.freeze([
   "cameraPreset", "cameraSpeed", "cameraAmount", "cameraDistance", "cameraElevation", "cameraAzimuth",
   "hudEnabled", "hudOpacity", "hudScale",
   "qualityPreset", "renderPixelRatioLimit",
-  "reactivity", "boidType", "morphScope", "morphSpeed", "movementSpeed", "movementAmount",
-  "boidAlignment", "boidCohesion", "boidSeparation", "visualizationSize",
-  "minParticles", "maxParticles", "particleSize", "particleOpacity", "noiseScale", "damping", "sphereBoundary",
-  "attractorColorSource", "attractorTrails", "trailLength", "trailParticles", "trailOpacity",
-  "traversalFloor", "traversalRange", "traversalCurve", "beatTraversalBoost",
+  "reactivity", "ringCount", "sphereRadius", "sphereSize", "ringOpacity",
+  "rotationSpeed", "rotationAmount",
   "bloomBase", "bloomGain", "bloomRadius", "bloomThreshold",
   "lockedCmapIndex", "cycleSpeed", "brightness",
   "beatFlashEnabled", "beatFlashIntensity", "beatSensitivity",

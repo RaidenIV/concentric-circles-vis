@@ -457,14 +457,15 @@ function writeConcentricSpherePoint(
   audioMagnitude,
   movement
 ) {
-  const ringT = (ringIndex + 0.5) / CONCENTRIC_SPHERE_RING_COUNT;
+  const visibleRingCount = Math.max(1, Math.round(state.ringCount || 36));
+  const ringT = (ringIndex + 0.5) / visibleRingCount;
   const depth = ringT * 2 - 1;
   const sphereCrossSection = Math.sqrt(Math.max(0, 1 - depth * depth));
   const reactivity = state.reactivity / 100;
   const bandCount = Math.max(1, state.magnitudes.length);
   const bandMagnitude = Number(state.magnitudes[ringIndex % bandCount]) || 0;
-  const movementAmount = Math.max(0, movement.amount);
-  const movementSpeed = Math.max(0, movement.speed);
+  const movementAmount = Math.max(0, state.rotationAmount / 100);
+  const movementSpeed = Math.max(0, state.rotationSpeed);
 
   // Bass expands the complete sphere, while each spectral band expands one
   // complete circular slice. The radius changes as a unit, so the geometry
@@ -618,7 +619,7 @@ function getViewportVisualizationMultiplier() {
 }
 
 function getEffectiveVisualizationScale() {
-  return RENDER_SCALE * (state.visualizationSize / 100) * getViewportVisualizationMultiplier();
+  return RENDER_SCALE * (state.sphereSize / 100) * getViewportVisualizationMultiplier();
 }
 
 /**
@@ -685,14 +686,10 @@ function updateParticleGeometry() {
  * audio-reactive particle count changes.
  */
 function updateConcentricSphereGeometry() {
-  const enabled = state.boidType === "sphereRings";
-  sphereRingSystem.visible = enabled;
-  particleSystem.visible = !enabled;
-
-  if (!enabled) {
-    sphereRingGeometry.setDrawRange(0, 0);
-    return;
-  }
+  // This project has a single renderer: the concentric ring sphere. The
+  // inherited particle system is kept hidden and is never user-selectable.
+  sphereRingSystem.visible = true;
+  particleSystem.visible = false;
 
   const positions = sphereRingBuffers.positions;
   const colors = sphereRingBuffers.colors;
@@ -700,6 +697,7 @@ function updateConcentricSphereGeometry() {
   const reactivity = state.reactivity / 100;
   const audioMagnitude = clamp(state.lowFreqMagnitude * reactivity, 0, 1);
   const movement = buildMovement(0);
+  const visibleRingCount = clamp(Math.round(state.ringCount || 36), 8, SPHERE_RING_COUNT);
   const stopsA = COLORMAPS[state.cmapA].stops;
   const stopsB = COLORMAPS[state.cmapB].stops;
   const colorMix = clamp(state.cmapMix, 0, 1);
@@ -707,8 +705,8 @@ function updateConcentricSphereGeometry() {
   const bandCount = Math.max(1, state.magnitudes.length);
   let vertex = 0;
 
-  for (let ringIndex = 0; ringIndex < SPHERE_RING_COUNT; ringIndex += 1) {
-    const ringColorT = ringIndex / Math.max(1, SPHERE_RING_COUNT - 1);
+  for (let ringIndex = 0; ringIndex < visibleRingCount; ringIndex += 1) {
+    const ringColorT = ringIndex / Math.max(1, visibleRingCount - 1);
     const colorA = sampleColormap(stopsA, ringColorT);
     const colorB = sampleColormap(stopsB, ringColorT);
     const bandMagnitude = Number(state.magnitudes[ringIndex % bandCount]) || 0;
@@ -726,7 +724,7 @@ function updateConcentricSphereGeometry() {
         DISPLAY_POINT,
         ringIndex,
         angleA,
-        state.sphereBoundary,
+        state.sphereRadius,
         audioMagnitude,
         movement
       );
@@ -743,7 +741,7 @@ function updateConcentricSphereGeometry() {
         DISPLAY_POINT,
         ringIndex,
         angleB,
-        state.sphereBoundary,
+        state.sphereRadius,
         audioMagnitude,
         movement
       );
@@ -761,7 +759,7 @@ function updateConcentricSphereGeometry() {
   markAttributeRange(sphereRingGeometry.attributes.position, vertex * 3);
   markAttributeRange(sphereRingGeometry.attributes.color, vertex * 3);
   sphereRingGeometry.setDrawRange(0, vertex);
-  sphereRingMaterial.opacity = state.particleOpacity / 100;
+  sphereRingMaterial.opacity = state.ringOpacity / 100;
 }
 
 /** Mark a span of a buffer attribute dirty without re-uploading the whole thing. */
@@ -905,6 +903,15 @@ function stepSimulation(stepTime, context) {
     state.cmapMix = 0;
   }
 
+  // The standalone concentric-sphere project does not advance the inherited
+  // particle/boid simulation. Audio analysis, beat detection, color cycling
+  // and the deterministic clock are the only simulation state required by the
+  // ring renderer.
+  detectBeat(state.magnitudes, reactivity);
+  return;
+
+  // Legacy particle code below is intentionally unreachable and retained only
+  // to minimize risk to shared helper behavior inherited from the reference.
   // Particle count follows the average magnitude.
   const targetCount = isActive
     ? Math.floor(
@@ -1086,7 +1093,7 @@ function updateCameraFraming() {
   if (aspect < 1) {
     const bound = isAttractorMode() ? 1.35 : 1.0;
     const subjectRadius =
-      getEffectiveVisualizationScale() * state.sphereBoundary * bound;
+      getEffectiveVisualizationScale() * state.sphereRadius * bound;
     const distance = Math.max(1, state.cameraDistance);
     const required =
       (2 * Math.atan(subjectRadius / aspect / distance) * 180) / Math.PI;
@@ -1284,12 +1291,8 @@ export function renderFrame(deltaTime, playing) {
   bloomPass.radius = state.bloomRadius;
   bloomPass.threshold = state.bloomThreshold;
 
-  // Resolved once per frame and shared by both geometry builders.
-  updateDisplayQuaternion();
-  updateDisplayCenter();
+  // The standalone project renders only the concentric ring sphere.
   updateConcentricSphereGeometry();
-  updateParticleGeometry();
-  updateTrailGeometry();
   updateCamera(deltaTime, playing);
   renderScene();
 }
