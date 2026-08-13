@@ -188,6 +188,8 @@ export const elements = {
   sphereSizeValue: byId("sphere-size-value"),
   ringOpacity: byId("ring-opacity"),
   ringOpacityValue: byId("ring-opacity-value"),
+  ringLineWidth: byId("ring-line-width"),
+  ringLineWidthValue: byId("ring-line-width-value"),
   rotationSpeed: byId("rotation-speed"),
   rotationSpeedValue: byId("rotation-speed-value"),
   rotationAmount: byId("rotation-amount"),

@@ -39,10 +39,11 @@ export const defaults = Object.freeze({
 
   // Concentric sphere
   reactivity: 100,
-  ringCount: 36,
+  ringCount: 100,
   sphereRadius: 1.0,
   sphereSize: 100,
   ringOpacity: 80,
+  ringLineWidth: 1.0,
   rotationSpeed: 1.0,
   rotationAmount: 100,
 
@@ -95,7 +96,7 @@ export const defaults = Object.freeze({
 
 
 export const SETTINGS_APP = "Concentric Sphere Visualizer";
-export const SETTINGS_VERSION = 2;
+export const SETTINGS_VERSION = 3;
 
 export const QUALITY_PRESETS = Object.freeze({
   performance: { renderPixelRatioLimit: 1 },
@@ -111,7 +112,7 @@ export const PERSISTED_SETTING_KEYS = Object.freeze([
   "cameraPreset", "cameraSpeed", "cameraAmount", "cameraDistance", "cameraElevation", "cameraAzimuth",
   "hudEnabled", "hudOpacity", "hudScale",
   "qualityPreset", "renderPixelRatioLimit",
-  "reactivity", "ringCount", "sphereRadius", "sphereSize", "ringOpacity",
+  "reactivity", "ringCount", "sphereRadius", "sphereSize", "ringOpacity", "ringLineWidth",
   "rotationSpeed", "rotationAmount",
   "bloomBase", "bloomGain", "bloomRadius", "bloomThreshold",
   "lockedCmapIndex", "cycleSpeed", "brightness",

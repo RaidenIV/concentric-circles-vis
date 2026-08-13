@@ -33,9 +33,7 @@ import {
   trailMaterial,
   trailSystem,
   SPHERE_RING_COUNT,
-  SPHERE_RING_SEGMENTS,
-  sphereRingBuffers,
-  sphereRingGeometry,
+  configureSphereRingLayout,
   sphereRingMaterial,
   sphereRingSystem
 } from "./scene.js";
@@ -457,7 +455,7 @@ function writeConcentricSpherePoint(
   audioMagnitude,
   movement
 ) {
-  const visibleRingCount = Math.max(1, Math.round(state.ringCount || 36));
+  const visibleRingCount = Math.max(1, Math.round(state.ringCount || 100));
   const ringT = (ringIndex + 0.5) / visibleRingCount;
   const depth = ringT * 2 - 1;
   const sphereCrossSection = Math.sqrt(Math.max(0, 1 - depth * depth));
@@ -680,93 +678,75 @@ function updateParticleGeometry() {
 }
 
 /**
- * Build the visible Concentric Sphere from continuous circular line segments.
- * This is deliberately independent of particle density: the user sees a fixed
- * set of complete circles rather than dotted rings that appear/disappear as the
- * audio-reactive particle count changes.
+ * Build the visible Concentric Sphere from dense, complete great-circle rings.
+ * Every circle has the same center and base radius; distributing their planes
+ * through 180° forms a closed spherical shell instead of separated latitude
+ * slices with empty bands between them.
  */
 function updateConcentricSphereGeometry() {
-  // This project has a single renderer: the concentric ring sphere. The
-  // inherited particle system is kept hidden and is never user-selectable.
   sphereRingSystem.visible = true;
   particleSystem.visible = false;
 
-  const positions = sphereRingBuffers.positions;
-  const colors = sphereRingBuffers.colors;
-  const visualizationScale = getEffectiveVisualizationScale();
+  const visibleRingCount = configureSphereRingLayout(
+    state.ringCount || 100,
+    state.ringLineWidth || 1
+  );
   const reactivity = state.reactivity / 100;
   const audioMagnitude = clamp(state.lowFreqMagnitude * reactivity, 0, 1);
-  const movement = buildMovement(0);
-  const visibleRingCount = clamp(Math.round(state.ringCount || 36), 8, SPHERE_RING_COUNT);
+  const movementAmount = Math.max(0, state.rotationAmount / 100);
+  const movementSpeed = Math.max(0, state.rotationSpeed);
+  const spherePulse =
+    1 + audioMagnitude * 0.22 * reactivity + beatImpulse * 0.055;
+  const visualizationScale =
+    getEffectiveVisualizationScale() * state.sphereRadius * spherePulse;
+
+  // The geometry is a unit sphere. One uniform scale preserves an exact sphere
+  // while the whole shell breathes with bass/beat energy. Individual frequency
+  // regions remain audio-reactive through color/brightness instead of breaking
+  // neighboring rings apart geometrically.
+  sphereRingSystem.scale.setScalar(visualizationScale);
+  sphereRingSystem.rotation.x = 0.42;
+  sphereRingSystem.rotation.y =
+    -0.38 +
+    state.time * 0.12 * movementSpeed * movementAmount +
+    Math.sin(state.time * 0.16 * movementSpeed) * 0.08 * movementAmount;
+  sphereRingSystem.rotation.z = 0;
+
   const stopsA = COLORMAPS[state.cmapA].stops;
   const stopsB = COLORMAPS[state.cmapB].stops;
   const colorMix = clamp(state.cmapMix, 0, 1);
   const baseBrightness = state.brightness / 100;
   const bandCount = Math.max(1, state.magnitudes.length);
-  let vertex = 0;
+  const instanceColors = sphereRingSystem.instanceColor.array;
 
   for (let ringIndex = 0; ringIndex < visibleRingCount; ringIndex += 1) {
-    const ringColorT = ringIndex / Math.max(1, visibleRingCount - 1);
-    const colorA = sampleColormap(stopsA, ringColorT);
-    const colorB = sampleColormap(stopsB, ringColorT);
-    const bandMagnitude = Number(state.magnitudes[ringIndex % bandCount]) || 0;
+    const ringT = ringIndex / Math.max(1, visibleRingCount - 1);
+    const colorA = sampleColormap(stopsA, ringT);
+    const colorB = sampleColormap(stopsB, ringT);
+
+    // Spread the available spectrum continuously around the sphere rather than
+    // repeating a small band array in visible stripes.
+    const bandPosition = ringT * Math.max(0, bandCount - 1);
+    const bandA = Math.floor(bandPosition);
+    const bandB = Math.min(bandCount - 1, bandA + 1);
+    const bandMix = bandPosition - bandA;
+    const magnitudeA = Number(state.magnitudes[bandA]) || 0;
+    const magnitudeB = Number(state.magnitudes[bandB]) || 0;
+    const bandMagnitude = magnitudeA + (magnitudeB - magnitudeA) * bandMix;
     const reactiveBrightness =
       baseBrightness * (0.45 + audioMagnitude * 0.35 + bandMagnitude * reactivity * 0.7);
-    const r = (colorA[0] + (colorB[0] - colorA[0]) * colorMix) * reactiveBrightness;
-    const g = (colorA[1] + (colorB[1] - colorA[1]) * colorMix) * reactiveBrightness;
-    const b = (colorA[2] + (colorB[2] - colorA[2]) * colorMix) * reactiveBrightness;
 
-    for (let segment = 0; segment < SPHERE_RING_SEGMENTS; segment += 1) {
-      const angleA = (segment / SPHERE_RING_SEGMENTS) * Math.PI * 2;
-      const angleB = ((segment + 1) / SPHERE_RING_SEGMENTS) * Math.PI * 2;
-
-      writeConcentricSpherePoint(
-        DISPLAY_POINT,
-        ringIndex,
-        angleA,
-        state.sphereRadius,
-        audioMagnitude,
-        movement
-      );
-      let offset = vertex * 3;
-      positions[offset] = DISPLAY_POINT[0] * visualizationScale;
-      positions[offset + 1] = DISPLAY_POINT[1] * visualizationScale;
-      positions[offset + 2] = DISPLAY_POINT[2] * visualizationScale;
-      colors[offset] = r;
-      colors[offset + 1] = g;
-      colors[offset + 2] = b;
-      vertex += 1;
-
-      writeConcentricSpherePoint(
-        DISPLAY_POINT,
-        ringIndex,
-        angleB,
-        state.sphereRadius,
-        audioMagnitude,
-        movement
-      );
-      offset = vertex * 3;
-      positions[offset] = DISPLAY_POINT[0] * visualizationScale;
-      positions[offset + 1] = DISPLAY_POINT[1] * visualizationScale;
-      positions[offset + 2] = DISPLAY_POINT[2] * visualizationScale;
-      colors[offset] = r;
-      colors[offset + 1] = g;
-      colors[offset + 2] = b;
-      vertex += 1;
-    }
+    const offset = ringIndex * 3;
+    instanceColors[offset] =
+      (colorA[0] + (colorB[0] - colorA[0]) * colorMix) * reactiveBrightness;
+    instanceColors[offset + 1] =
+      (colorA[1] + (colorB[1] - colorA[1]) * colorMix) * reactiveBrightness;
+    instanceColors[offset + 2] =
+      (colorA[2] + (colorB[2] - colorA[2]) * colorMix) * reactiveBrightness;
   }
 
-  markAttributeRange(sphereRingGeometry.attributes.position, vertex * 3);
-  markAttributeRange(sphereRingGeometry.attributes.color, vertex * 3);
-  sphereRingGeometry.setDrawRange(0, vertex);
+  sphereRingSystem.instanceColor.needsUpdate = true;
   sphereRingMaterial.opacity = state.ringOpacity / 100;
-}
-
-/** Mark a span of a buffer attribute dirty without re-uploading the whole thing. */
-function markAttributeRange(attribute, floatCount) {
-  attribute.updateRange.offset = 0;
-  attribute.updateRange.count = floatCount;
-  attribute.needsUpdate = true;
 }
 
 /**

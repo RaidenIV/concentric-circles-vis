@@ -232,47 +232,80 @@ scene.add(trailSystem);
 /* ---------------------------------------------------------------------------
    Concentric-sphere rings
 
-   The Concentric Sphere mode is intentionally line-based rather than a point
-   cloud. Each ring is a complete circle, and the stack of circular
-   cross-sections forms the three-dimensional sphere.
+   The standalone visualizer renders dense, complete circular rings as one
+   instanced torus mesh. Every ring shares the same center and radius; only its
+   plane rotates through the sphere. At the default width, neighboring rings
+   overlap just enough at the equator to close the shell with no visual gaps.
 --------------------------------------------------------------------------- */
-export const SPHERE_RING_COUNT = 72;
-export const SPHERE_RING_SEGMENTS = 128;
-const SPHERE_RING_VERTEX_CAPACITY =
-  SPHERE_RING_COUNT * SPHERE_RING_SEGMENTS * 2;
+export const SPHERE_RING_COUNT = 200;
+export const SPHERE_RING_SEGMENTS = 256;
 
-export const sphereRingBuffers = {
-  positions: new Float32Array(SPHERE_RING_VERTEX_CAPACITY * 3),
-  colors: new Float32Array(SPHERE_RING_VERTEX_CAPACITY * 3)
-};
+const sphereRingDummy = new THREE.Object3D();
+let sphereRingLayoutCount = 0;
+let sphereRingLayoutWidth = 0;
 
-export const sphereRingGeometry = new THREE.BufferGeometry();
-sphereRingGeometry.setAttribute(
-  "position",
-  new THREE.BufferAttribute(sphereRingBuffers.positions, 3)
-);
-sphereRingGeometry.setAttribute(
-  "color",
-  new THREE.BufferAttribute(sphereRingBuffers.colors, 3)
-);
-sphereRingGeometry.setDrawRange(0, 0);
+function makeSphereRingGeometry(ringCount, lineWidth) {
+  const count = Math.max(24, Math.min(SPHERE_RING_COUNT, Math.round(ringCount)));
+  const width = Math.max(0.25, Math.min(3, Number(lineWidth) || 1));
+  // Adjacent great-circle planes are π/count radians apart. A tube radius of
+  // half that angular spacing makes neighboring rings meet at the equator; the
+  // user-facing width is a multiplier around that gap-closing baseline.
+  const tubeRadius = Math.min(0.2, (Math.PI / (2 * count)) * width * 1.04);
+  return new THREE.TorusGeometry(1, tubeRadius, 6, SPHERE_RING_SEGMENTS);
+}
 
-export const sphereRingMaterial = new THREE.LineBasicMaterial({
-  vertexColors: true,
+export const sphereRingMaterial = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
   transparent: true,
   opacity: defaults.ringOpacity / 100,
   blending: THREE.AdditiveBlending,
-  depthWrite: false
+  depthWrite: false,
+  side: THREE.DoubleSide
 });
 
-export const sphereRingSystem = new THREE.LineSegments(
-  sphereRingGeometry,
-  sphereRingMaterial
+export const sphereRingSystem = new THREE.InstancedMesh(
+  makeSphereRingGeometry(defaults.ringCount, defaults.ringLineWidth),
+  sphereRingMaterial,
+  SPHERE_RING_COUNT
+);
+sphereRingSystem.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+sphereRingSystem.instanceColor = new THREE.InstancedBufferAttribute(
+  new Float32Array(SPHERE_RING_COUNT * 3),
+  3
 );
 sphereRingSystem.layers.enable(BLOOM_LAYER);
 sphereRingSystem.frustumCulled = false;
 sphereRingSystem.visible = false;
 scene.add(sphereRingSystem);
+
+export function configureSphereRingLayout(ringCount, lineWidth) {
+  const count = Math.max(24, Math.min(SPHERE_RING_COUNT, Math.round(ringCount)));
+  const width = Math.max(0.25, Math.min(3, Number(lineWidth) || 1));
+
+  if (count !== sphereRingLayoutCount || Math.abs(width - sphereRingLayoutWidth) > 1e-6) {
+    const previousGeometry = sphereRingSystem.geometry;
+    sphereRingSystem.geometry = makeSphereRingGeometry(count, width);
+    if (previousGeometry) previousGeometry.dispose();
+    sphereRingLayoutCount = count;
+    sphereRingLayoutWidth = width;
+  }
+
+  sphereRingSystem.count = count;
+  for (let ringIndex = 0; ringIndex < count; ringIndex += 1) {
+    // A circle's plane repeats after π radians, so [0, π) gives every unique
+    // meridian orientation without duplicating the first ring at the end.
+    const planeAngle = (ringIndex / count) * Math.PI;
+    sphereRingDummy.position.set(0, 0, 0);
+    sphereRingDummy.rotation.set(0, planeAngle, 0);
+    sphereRingDummy.scale.set(1, 1, 1);
+    sphereRingDummy.updateMatrix();
+    sphereRingSystem.setMatrixAt(ringIndex, sphereRingDummy.matrix);
+  }
+  sphereRingSystem.instanceMatrix.needsUpdate = true;
+  return count;
+}
+
+configureSphereRingLayout(defaults.ringCount, defaults.ringLineWidth);
 
 /* ---------------------------------------------------------------------------
    Sizing

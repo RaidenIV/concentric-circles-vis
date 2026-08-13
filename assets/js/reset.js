@@ -35,6 +35,7 @@ const sectionKeys = {
     "sphereRadius",
     "sphereSize",
     "ringOpacity",
+    "ringLineWidth",
     "rotationSpeed",
     "rotationAmount"
   ],

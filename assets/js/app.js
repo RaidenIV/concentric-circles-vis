@@ -181,6 +181,7 @@ function bindControls() {
   bindRange(elements.sphereRadius, elements.sphereRadiusValue, "sphereRadius");
   bindRange(elements.sphereSize, elements.sphereSizeValue, "sphereSize");
   bindRange(elements.ringOpacity, elements.ringOpacityValue, "ringOpacity");
+  bindRange(elements.ringLineWidth, elements.ringLineWidthValue, "ringLineWidth");
   bindRange(elements.rotationSpeed, elements.rotationSpeedValue, "rotationSpeed");
   bindRange(elements.rotationAmount, elements.rotationAmountValue, "rotationAmount");
 
